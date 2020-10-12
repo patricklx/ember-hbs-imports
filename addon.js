@@ -2,17 +2,6 @@
 const BroccoliFilter = require('broccoli-persistent-filter');
 const importLoaders = require('./import-processor').importProcessors;
 
-class ImportAstTransforms {
-  transform(ast) {
-    importLoaders.replaceInAst(ast, this.relativePath);
-  }
-  constructor(options) {
-    importLoaders.options.root = '.';
-    importLoaders.glimmer = options.syntax;
-    this.root = '.';
-    this.relativePath = options.moduleName;
-  }
-}
 
 class TemplateImportProcessor extends BroccoliFilter {
 
@@ -39,7 +28,8 @@ class TemplateImportProcessor extends BroccoliFilter {
   }
 
   processString(contents, relativePath) {
-    importLoaders.processAst(contents, relativePath);
+    const [res, imports] = importLoaders.processAst(contents, relativePath);
+    return res;
   }
 }
 
