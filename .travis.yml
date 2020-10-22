@@ -37,7 +37,7 @@ script: 'true'
 deploy:
   provider: npm
   email: $NPM_EMAIL
-  api_key: $NPM_KEY
-  skip_cleanup: true
+  api_token: $NPM_KEY
+  cleanup: false
   on:
     branch: master
