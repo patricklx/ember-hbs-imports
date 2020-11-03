@@ -30,7 +30,7 @@ export default class TemplateImportProcessor extends BroccoliFilter {
   }
 
   cacheKeyProcessString(string, relativePath) {
-    return md5Hex([require('../package').version, string, relativePath, Math.random()]);
+    return md5Hex([require('../package').version, string, relativePath]);
   }
 
   processString(contents, relativePath) {
