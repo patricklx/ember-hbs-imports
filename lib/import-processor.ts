@@ -11,16 +11,11 @@ import { hash } from "spark-md5";
 import fs from 'fs';
 import path from 'path';
 
-function generateScopedName(name, fullPath) {
+function generateScopedName(name, fullPath, namespace) {
   fullPath = fullPath.replace(/\\/g, '/');
-  let context = require('./package.json').name;
-  if (fullPath.includes('node_modules')) {
-    const p = fullPath.split('node_modules/').slice(-1)[0];
-    context = p.split('/')[0];
-  }
   const prefix = fullPath.split('/').slice(-2)[0];
-  const hashKey = `${name}--${fullPath}`;
-  return `${context}_${prefix}_${name}_${hash(hashKey).slice(0, 5)}`;
+  const hashKey = `${namespace}_${prefix}_${name}`;
+  return `${namespace}_${prefix}_${name}_${hash(hashKey).slice(0, 5)}`;
 }
 
 type Import = {
@@ -75,10 +70,12 @@ const builtInHelpers = [
   'yield',
 ];
 
-export const importProcessors = {
+const importProcessors = {
   options: {
     root: '',
-    failOnBadImport: false
+    namespace: '',
+    failOnBadImport: false,
+    failOnMissingImport: false
   },
   glimmer,
   resolvePath(imp, name) {
@@ -97,14 +94,17 @@ export const importProcessors = {
         const localName = params.slice(0, -2).join(' ');
         let importPath = params.slice(-1)[0];
         if (importPath.startsWith('~/')) {
-          importPath = importPath.replace('~/', '');
+          importPath = importPath.replace('~/', this.options.namespace + '/');
+        }
+        if (importPath.startsWith('ui/')) {
+          importPath = importPath.replace('ui/', this.options.namespace + '/ui/');
         }
         if (importPath.startsWith('.')) {
           importPath = path.resolve(relativePath, '..', importPath).split(path.sep).join('/');
           importPath = path.relative(this.options.root, importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
         }
-        const hasMultiple = localName.includes(',');
+        const hasMultiple = localName.includes(',') || localName.includes(' as ');
         const localNames = localName.replace(/['"]/g, '').split(',');
         localNames.forEach((lName) => {
           lName = lName.trim();
@@ -171,18 +171,23 @@ export const importProcessors = {
       if (node && node.blockParams && node.blockParams.includes(expression)) {
         return true;
       }
-      if (!(path as any).parent) return null;
-      return findBlockParams(expression, (path as any).parent);
+      if (!p.parent) return null;
+      return findBlockParams(expression, p.parent as any);
     };
 
     const visitor: NodeVisitor = {
       PathExpression: (node, p) => {
-        if (node.original === 'this' || node.original.startsWith('this.') || node.original.startsWith('@'))
-          if (findBlockParams(node.original, p)) return;
+        if (node.original === 'this' || node.original.startsWith('this.') || node.original.startsWith('@')) return;
+        if (node.original === 'block') return;
+        if (findBlockParams(node.original.split('.')[0], p)) return;
         const i = findImport(node.original);
         if (!i && !builtInHelpers.includes(node.original) && !fs.existsSync(path.join(importProcessors.options.root, 'helpers', node.original))) {
           if (p.parentNode?.type === 'ElementModifierStatement') return;
-          throw new Error('could not find import for path "' + node.original + '" in ' + relativePath);
+          if (this.options.failOnMissingImport) {
+            throw new Error('could not find import for path "' + node.original + '" in ' + relativePath);
+          } else {
+            console.log('could not find import for path "' + node.original + '" in ' + relativePath)
+          }
         }
         if (i) {
           const resolvedPath = importProcessors.resolvePath(i, node.original);
@@ -190,8 +195,8 @@ export const importProcessors = {
             const name = node.original.split('.').slice(1).join('_');
             node.type = 'StringLiteral' as any;
             delete (node as any).parts;
-            node.original = generateScopedName(name, resolvedPath);
-            (node as any).value = generateScopedName(name, resolvedPath);
+            node.original = generateScopedName(name, resolvedPath, this.options.namespace);
+            (node as any).value = generateScopedName(name, resolvedPath, this.options.namespace);
             i.used = true;
             imported.others.add(resolvedPath);
             return;
@@ -210,8 +215,8 @@ export const importProcessors = {
             return;
           }
           // its a helper
-          imported.others.add(resolvedPath);
-          node.original = `ember-template-helper-import/helpers/invoke-helper this '${resolvedPath}'`;
+          imported.others.add(resolvedPath + '.js');
+          node.original = `ember-template-imports/helpers/invoke-helper this '${resolvedPath}'`;
           i.used = true;
         }
       },
@@ -245,7 +250,7 @@ export const importProcessors = {
 
           const resolvedPath = importProcessors.resolvePath(imp, p.original);
           modifiers.add(p.original);
-          imported.others.add(resolvedPath);
+          imported.others.add(resolvedPath + '.js');
           p.original = resolvedPath;
           i.used = true;
         });
@@ -274,3 +279,6 @@ export const importProcessors = {
     return [glimmer.print(ast), imported] as [string, ReturnType<typeof importProcessors['replaceInAst']>];
   }
 };
+
+
+export default importProcessors;

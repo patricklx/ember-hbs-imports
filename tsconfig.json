@@ -13,15 +13,14 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noImplicitReturns": false,
-    "noEmitOnError": false,
+    "noEmitOnError": true,
     "baseUrl": ".",
     "module": "CommonJS",
     "experimentalDecorators": true,
     "paths": {}
   },
   "include": [
-    "hbs-import-loader.ts",
-    "import-processor.ts",
+    "lib/",
     "addon/**/*",
     "app/**/*"
   ]
