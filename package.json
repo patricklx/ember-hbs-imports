@@ -1,6 +1,6 @@
 {
   "name": "ember-template-imports",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricklx/ember-template-imports"
@@ -78,6 +78,7 @@
     "node": "6.* || 8.* || >= 10.*"
   },
   "ember-addon": {
-    "main": "addon.js"
+    "main": "addon.js",
+    "before": ["ember-cli-htmlbars"]
   }
 }
