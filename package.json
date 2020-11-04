@@ -1,6 +1,6 @@
 {
   "name": "ember-template-imports",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricklx/ember-template-imports"
@@ -27,7 +27,8 @@
   },
   "dependencies": {
     "broccoli-persistent-filter": "^2.1.1",
-    "ember-cli-babel": "^7.1.2"
+    "ember-cli-babel": "^7.1.2",
+    "ember-simple-mu-resolver": "^0.1.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.2.1",
@@ -79,6 +80,8 @@
   },
   "ember-addon": {
     "main": "addon.js",
-    "before": ["ember-cli-htmlbars"]
+    "before": [
+      "ember-cli-htmlbars"
+    ]
   }
 }
