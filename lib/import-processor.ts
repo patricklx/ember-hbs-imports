@@ -222,6 +222,7 @@ const importProcessors = {
       },
       ElementNode: (element, p: Path<ElementNode>) => {
         if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase()) return ;
+        if (element.tag.startsWith(':')) return ;
         const imp = findImport(element.tag.split('.')[0]);
         if (findBlockParams(element.tag.split('.')[0], p)) return;
         if (builtInComponents.includes(element.tag)) return;
