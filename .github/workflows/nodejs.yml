@@ -15,12 +15,18 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-    - name: npm install, build, and test
+    - name: npm install, build
       run: |
         npm install
-        ./node_modules/.bin/ember test
+        ./node_modules/.bin/tsc
       env:
         CI: true
+    - name: Run test component
+      run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
+    - name: Run test helpers
+      run: rf -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
+    - name: Run test modifiers
+      run: rf -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
 
   ember-try:
     name: ember-try (${{ matrix.scenario }})
@@ -51,11 +57,11 @@ jobs:
       - name: Build
         run: ./node_modules/.bin/tsc && ./node_modules/.bin/ember build --environment test
       - name: Run test component
-        run: mv test-folders/component-tests tests ./node_modules/.bin/ember test
+        run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
       - name: Run test helpers
-        run: rf -rf tests && mv test-folders/helper-tests tests ./node_modules/.bin/ember test
+        run: rf -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
       - name: Run test modifiers
-        run: rf -rf tests && mv test-folders/modifier-tests tests ./node_modules/.bin/ember test
+        run: rf -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
 
   deploy:
     needs: [test, ember-try]
@@ -76,15 +82,6 @@ jobs:
           ssh-keyscan github.com >> ~/.ssh/known_hosts
           npm install
           ./node_modules/.bin/tsc
-          version=$(cat package.json | jq -r '.version')
-          TAG=v$version
-          if git rev-parse "$TAG" >/dev/null 2>&1; then
-            echo "tag exists";
-          else
-            ADDON_DOCS_UPDATE_LATEST=false ADDON_DOCS_VERSION_PATH=$TAG ./node_modules/.bin/ember deploy production
-            ADDON_DOCS_UPDATE_LATEST=true ADDON_DOCS_VERSION_PATH=$TAG ./node_modules/.bin/ember deploy production
-          fi
-          ADDON_DOCS_UPDATE_LATEST=false ADDON_DOCS_VERSION_PATH=master ./node_modules/.bin/ember deploy production
         env:
           CI: true
           DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
