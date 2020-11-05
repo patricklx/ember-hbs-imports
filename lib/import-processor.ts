@@ -116,7 +116,7 @@ const importProcessors = {
           if (importName === '*') {
             const name = `${lName}\\.([^\\s\\)} |]+)`;
             imports.push({
-              node, dynamic: true, localName: name, importPath: `${importPath}/`, isLocalNameValid: true
+              node, dynamic: true, localName: name, importPath: importPath, isLocalNameValid: true
             });
             return;
           }
