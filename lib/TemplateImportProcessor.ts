@@ -1,6 +1,6 @@
-import BroccoliFilter from "broccoli-persistent-filter";
-import importProcessor from "./import-processor";
-import md5Hex from "md5-hex";
+import BroccoliFilter from 'broccoli-persistent-filter';
+import importProcessor from './import-processor';
+import md5Hex from 'md5-hex';
 
 export default class TemplateImportProcessor extends BroccoliFilter {
   options: any;

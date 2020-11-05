@@ -65,6 +65,7 @@ const builtInHelpers = [
 
 const importProcessors = {
   options: {
+    styleExtension: 'scss',
     root: '',
     namespace: '',
     failOnBadImport: false,
@@ -72,7 +73,7 @@ const importProcessors = {
   },
   glimmer,
   resolvePath(imp, name) {
-    if (name.includes('.') && !imp.importPath.endsWith('.scss')) {
+    if (name.includes('.') && !imp.importPath.endsWith(`.${this.options.styleExtension}`)) {
       name = name.split('.').slice(1).join('/');
       return `${imp.importPath}/${name}`;
     }

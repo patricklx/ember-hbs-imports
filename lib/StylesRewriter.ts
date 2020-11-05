@@ -1,19 +1,30 @@
-import processStyles from "./hbs-styles-import-loader";
-import BroccoliFilter from "broccoli-persistent-filter";
-import md5Hex from "md5-hex";
+import { rewriterPlugin } from './rewriter-plugin';
+import BroccoliFilter from 'broccoli-persistent-filter';
+import md5Hex from 'md5-hex';
+import postcss, { AcceptedPlugin } from 'postcss';
+import postcssScss from 'postcss-scss';
+
+type Options = {
+  namespace: string;
+  extension: string;
+  before: AcceptedPlugin[],
+  after: AcceptedPlugin[]
+};
 
 module.exports = class StylesRewriter extends BroccoliFilter {
-  options: {
-    namespace: string
-  };
+  options: Options;
   extensions: string[];
   targetExtension: string;
 
-  constructor(inputNode, options: any = {}) {
+  constructor(inputNode, options: Partial<Options> = {}) {
     super(inputNode, { persist: true, ...options });
+    // @ts-ignore
     this.options = options;
-    this.extensions = [ 'scoped.scss' ];
-    this.targetExtension = 'scoped.scss';
+    this.options.extension = this.options.extension || 'scss';
+    this.options.before = this.options.before || [];
+    this.options.after = this.options.after || [];
+    this.extensions = [ 'scoped.' + this.options.extension ];
+    this.targetExtension = 'scoped.' + this.options.extension;
   }
 
   cacheKeyProcessString(string, relativePath) {
@@ -25,6 +36,30 @@ module.exports = class StylesRewriter extends BroccoliFilter {
   }
 
   processString(contents, relativePath) {
-    return processStyles(relativePath, this.options.namespace, contents);
+    return this.processStyles(relativePath, contents);
   }
+
+  processStyles(relativePath, contents) {
+    if (relativePath.endsWith('pod-styles.scss')) {
+      return contents;
+    }
+    if (relativePath.endsWith('scoped.scss')) {
+      const plugins = [...this.options.before]
+      plugins.push(rewriterPlugin({
+        filename: relativePath,
+        namespace: this.options.namespace,
+        deep: false
+      }))
+      plugins.push(...this.options.after)
+
+      return postcss(plugins)
+        .process(contents, {
+          from: relativePath,
+          to: relativePath,
+          parser: postcssScss
+        })
+        .then(results => results.css);
+    }
+  }
+
 }

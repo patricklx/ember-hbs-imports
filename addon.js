@@ -43,17 +43,32 @@ module.exports = {
   name: require('./package').name,
   imports: imports,
 
+  _getAddonOptions() {
+    const parentOptions = this.parent && this.parent.options;
+    const appOptions = this.app && this.app.options;
+
+    return (parentOptions || appOptions || {})['ember-template-imports'] || {
+      style: {
+        extension: 'scss',
+        plugins: {
+          before: [],
+          after: []
+        }
+      }
+    };
+  },
+
   included(includer) {
     this.includer = includer;
     // If we are being used inside an addon, then we want the addon's scoped styles
     // to be processed, but not the consuming app's. So we wrap the parent addon's
     // treeForAddonStyles to process them for scoping.
     if (isAddon(this.parent)) {
-      let original = this.parent.treeForStyles || ((t) => t);
-      let self = this;
+      const original = this.parent.treeForStyles || ((t) => t);
+      const self = this;
       this.parent.treeForStyles = function(stylesInput = path.join(this.root, this.treePaths['addon-styles'])) {
         let originalOutput = original.call(this, stylesInput);
-        let scopedOutput = self._scopedStyles(path.join(this.root, this.treePaths.addon), this.name);
+        const scopedOutput = self._scopedStyles(path.join(this.root, this.treePaths.addon), this.name);
         originalOutput = new Funnel(originalOutput, { srcDir: this.treePaths.styles });
         return stew.mv(new Merge([ originalOutput, scopedOutput ]), this.treePaths.styles + '/' + this.name);
       }
@@ -62,7 +77,7 @@ module.exports = {
   },
 
   treeForStyles(tree) {
-    let trees = [];
+    const trees = [];
     if (tree) {
       trees.push(tree);
     }
@@ -70,16 +85,22 @@ module.exports = {
       trees.push(this._scopedStyles(path.join(this.parent.root, 'app'), this.parent.name()));
     }
     if (isDummyAppBuild(this)) {
-      trees.push(this._scopedStyles(path.join(this.project.root, 'app'), this.parent.name(), `${ this.parent.name() }-pod-styles.scss`));
+      const config = this._getAddonOptions().style;
+      trees.push(this._scopedStyles(path.join(this.project.root, 'app'), this.parent.name(), `${this.parent.name()}-pod-styles.${config.extension}`));
       trees.push(this._scopedStyles(path.join(this.project.root, 'tests', 'dummy', 'app'), 'dummy'));
     }
     return new Merge(trees);
   },
 
-  _scopedStyles(tree, namespace, outputFile = 'pod-styles.scss') {
-    tree = new Funnel(tree, { include: [ `**/*.scoped.scss` ]});
+  _scopedStyles(tree, namespace, outputFile) {
+    const config = this._getAddonOptions().style;
+    outputFile = outputFile || 'pod-styles.' + config.extension
+    tree = new Funnel(tree, { include: [ '**/*.scoped.' + config.extension ] });
     tree = new StylesRewriter(tree, {
-      namespace
+      namespace,
+      extension: config.extension,
+      before: config.plugins.before,
+      after: config.plugins.after,
     });
     tree = new Concat(tree, { allowNone: true, outputFile });
     return tree;
@@ -94,6 +115,7 @@ module.exports = {
         const name = typeof self.parent.name === 'function' ? self.parent.name() : self.parent.name;
         const isDummy = isDummyAppBuild(self);
         const options = {
+          styleExtension: this._getAddonOptions().style.extension,
           root: path.join(this.project.root, ...(isDummy ? ['tests','dummy'] : [])),
           failOnMissingImport: false,
           failOnBadImport: false,
