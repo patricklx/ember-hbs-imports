@@ -50,12 +50,11 @@ jobs:
       - name: Set up Volta
         uses: rwjblue/setup-volta@v1
       - name: Install dependencies (npm)
-        run: |
-          npm install
+        run: npm install && ./node_modules/.bin/tsc
       - name: Setup ember-try scenario
         run: ./node_modules/.bin/ember try:one ember-${{ matrix.scenario }} --skip-cleanup --- cat package.json
       - name: Build
-        run: ./node_modules/.bin/tsc && ./node_modules/.bin/ember build --environment test
+        run: ./node_modules/.bin/ember build --environment test
       - name: Run test component
         run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
       - name: Run test helpers
