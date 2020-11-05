@@ -100,8 +100,7 @@ const importProcessors = {
           importPath = importPath.replace('ui/', this.options.namespace + '/ui/');
         }
         if (importPath.startsWith('.')) {
-          importPath = path.resolve(relativePath, '..', importPath).split(path.sep).join('/');
-          importPath = path.relative(this.options.root, importPath).split(path.sep).join('/');
+          importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
         }
         const hasMultiple = localName.includes(',') || localName.includes(' as ');

@@ -57,6 +57,7 @@ module.exports = {
         return stew.mv(new Merge([ originalOutput, scopedOutput ]), this.treePaths.styles + '/' + this.name);
       }
     }
+    this._super.included.call(this, arguments);
   },
 
   treeForStyles(tree) {
@@ -90,11 +91,12 @@ module.exports = {
       ext: 'hbs',
       toTree: (tree) => {
         const name = typeof self.parent.name === 'function' ? self.parent.name() : self.parent.name;
+        const isDummy = isDummyAppBuild(self);
         const options = {
-          root: this.project.root,
+          root: path.join(this.project.root, ...(isDummy ? ['tests','dummy'] : [])),
           failOnMissingImport: false,
           failOnBadImport: false,
-          namespace: name,
+          namespace: isDummy ? 'dummy' : name,
           imports: this.imports
         }
         tree = new TemplateImportProcessor(tree, options);
