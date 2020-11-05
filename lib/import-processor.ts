@@ -215,6 +215,24 @@ const importProcessors = {
         }
       },
       ElementNode: (element, p: Path<ElementNode>) => {
+        element.modifiers.forEach((modifier) => {
+          const p = modifier.path as any;
+          const i = findImport(p.original);
+          if (!i) {
+            if (!this.options.failOnBadImport) {
+              console.warn('modifier', p.original, 'is not imported');
+            } else {
+              throw new Error(`modifier ${p.original} is not imported`);
+            }
+            return;
+          }
+
+          const resolvedPath = importProcessors.resolvePath(i, p.original);
+          modifiers.add(resolvedPath);
+          imported.others.add(resolvedPath + '.js');
+          p.original = resolvedPath;
+          i.used = true;
+        });
         if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase()) return ;
         if (element.tag.startsWith(':')) return ;
         const imp = findImport(element.tag.split('.')[0]);
@@ -231,24 +249,6 @@ const importProcessors = {
           imported.components.add(resolvedPath);
           components.push([element.tag, resolvedPath]);
         }
-        element.modifiers.forEach((modifier) => {
-          const p = modifier.path as any;
-          const i = findImport(p.original);
-          if (!i) {
-            if (!this.options.failOnBadImport) {
-              console.warn('modifier', p.original, 'is not imported');
-            } else {
-              throw new Error(`modifier ${p.original} is not imported`);
-            }
-            return;
-          }
-
-          const resolvedPath = importProcessors.resolvePath(imp, p.original);
-          modifiers.add(p.original);
-          imported.others.add(resolvedPath + '.js');
-          p.original = resolvedPath;
-          i.used = true;
-        });
       }
     };
     glimmer.traverse(ast, visitor);
