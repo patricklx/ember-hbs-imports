@@ -7,8 +7,8 @@ module('Acceptance | helper', function(hooks) {
 
   test('helper works', async function(assert) {
     await visit('/');
-    assert.equal(find('.global').textContent, "I'm a globally referenced helper");
-    assert.equal(find('.local').textContent, "I'm a locally referenced helper");
+    assert.equal(find('.global').textContent, 'I\'m a globally referenced helper');
+    assert.equal(find('.local').textContent, 'I\'m a locally referenced helper');
 
     assert.equal(findAll('.global').length, 1);
     assert.equal(findAll('.local').length, 2);
