@@ -22,11 +22,11 @@ jobs:
       env:
         CI: true
     - name: Run test component
-      run: mv test-folders/component-tests tests ./node_modules/.bin/ember test
+      run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
     - name: Run test helpers
-      run: rf -rf tests && mv test-folders/helper-tests tests ./node_modules/.bin/ember test
+      run: rf -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
     - name: Run test modifiers
-      run: rf -rf tests && mv test-folders/modifier-tests tests ./node_modules/.bin/ember test
+      run: rf -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
 
   ember-try:
     name: ember-try (${{ matrix.scenario }})
@@ -57,11 +57,11 @@ jobs:
       - name: Build
         run: ./node_modules/.bin/tsc && ./node_modules/.bin/ember build --environment test
       - name: Run test component
-        run: mv test-folders/component-tests tests ./node_modules/.bin/ember test
+        run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
       - name: Run test helpers
-        run: rf -rf tests && mv test-folders/helper-tests tests ./node_modules/.bin/ember test
+        run: rf -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
       - name: Run test modifiers
-        run: rf -rf tests && mv test-folders/modifier-tests tests ./node_modules/.bin/ember test
+        run: rf -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
 
   deploy:
     needs: [test, ember-try]
