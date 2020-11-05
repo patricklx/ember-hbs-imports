@@ -2,7 +2,7 @@ import Helper from '@ember/component/helper';
 import { later } from '@ember/runloop';
 import { getOwner } from '@ember/application';
 
-export const helper = Helper.extend({
+export default Helper.extend({
   text: 'abc',
   init(...args) {
     this._super(...args);
