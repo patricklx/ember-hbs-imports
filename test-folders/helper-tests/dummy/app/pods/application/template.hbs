@@ -1,0 +1,17 @@
+{{import myHelper from "ui/helper"}}
+{{import mySecondHelper from "./helper"}}
+{{import helperWithNumber5 from "./helper"}};
+{{import complexHelper from "./complex-helper"}};
+
+<div class="global">{{myHelper "I'm a globally referenced helper"}}</div>
+<div class="local">{{mySecondHelper "I'm a locally referenced helper"}}</div>
+
+{{#if (helperWithNumber5 5)}}
+  <div class="local"></div>
+{{/if}}
+
+{{#if (helperWithNumber5 0)}}
+  <div class="local"></div>
+{{/if}}
+
+<div class="complex">{{complexHelper}}</div>

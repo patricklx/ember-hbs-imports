@@ -181,13 +181,8 @@ const importProcessors = {
         if (node.original === 'block') return;
         if (findBlockParams(node.original.split('.')[0], p)) return;
         const i = findImport(node.original);
-        if (!i && !builtInHelpers.includes(node.original) && !fs.existsSync(path.join(importProcessors.options.root, 'helpers', node.original))) {
+        if (!i && !builtInHelpers.includes(node.original)) {
           if (p.parentNode?.type === 'ElementModifierStatement') return;
-          if (this.options.failOnMissingImport) {
-            throw new Error('could not find import for path "' + node.original + '" in ' + relativePath);
-          } else {
-            console.log('could not find import for path "' + node.original + '" in ' + relativePath)
-          }
         }
         if (i) {
           const resolvedPath = importProcessors.resolvePath(i, node.original);

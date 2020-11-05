@@ -1,0 +1,52 @@
+// spaced
+{{ import mymodifier from "ui/modifier" }}
+// tabbed
+{{  import    secondmodifier from    "application/modifier"    }}
+// mixed
+{{  import            modifiermodifier           from          "ui/modifier"  }}
+// newlined
+{{import
+  secondmodifierSecondmodifier
+  from
+  "application/modifier"
+}}
+// newlined mixed
+{{import
+  modifiermodifiermodifier
+  from
+  "ui/modifier"
+}}
+// newlined mixed with tabs and spaces
+{{  import
+  modifiermodifiermodifiermodifier
+  from
+  "application/modifier"
+}}
+
+{{import modifier as asmodifier from "ui" }}
+{{import a as amodifier from "ui" }}
+{{import "* as modifiers" from "ui" }}
+{{import "a, b" from "ui" }}
+{{import "a as x, b as y" from "ui" }}
+{{import "a as z, modifier" from "ui" }}
+
+<div class="modifiers"
+  {{mymodifier "modifier"}}
+  {{secondmodifier "modifier"}}
+  {{modifiermodifier "modifier"}}
+  {{secondmodifierSecondmodifier "modifier"}}
+  {{modifiermodifiermodifier "modifier"}}
+  {{modifiermodifiermodifiermodifier "modifier"}}
+  {{asmodifier "modifier"}}
+  {{amodifier "modifier"}}
+  {{modifiers.modifier "modifier"}}
+  {{modifiers.a "modifier"}}
+  {{modifiers.b "modifier"}}
+  {{modifiers.test-modifier "modifier"}}
+  {{a "modifier"}}
+  {{b "modifier"}}
+  {{x "modifier"}}
+  {{y "modifier"}}
+  {{modifier "modifier"}}
+>
+</div>

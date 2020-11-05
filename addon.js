@@ -90,7 +90,14 @@ module.exports = {
       ext: 'hbs',
       toTree: (tree) => {
         const name = typeof self.parent.name === 'function' ? self.parent.name() : self.parent.name;
-        tree = new TemplateImportProcessor(tree, { root: this.project.root, namespace: name, imports: this.imports });
+        const options = {
+          root: this.project.root,
+          failOnMissingImport: false,
+          failOnBadImport: false,
+          namespace: name,
+          imports: this.imports
+        }
+        tree = new TemplateImportProcessor(tree, options);
         return tree;
       }
     });
