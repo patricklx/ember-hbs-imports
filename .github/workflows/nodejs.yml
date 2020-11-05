@@ -15,13 +15,18 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 12.x
-    - name: npm install, build, and test
+    - name: npm install, build
       run: |
         npm install
         ./node_modules/.bin/tsc
-        ./node_modules/.bin/ember test
       env:
         CI: true
+    - name: Run test component
+      run: mv test-folders/component-tests tests ./node_modules/.bin/ember test
+    - name: Run test helpers
+      run: rf -rf tests && mv test-folders/helper-tests tests ./node_modules/.bin/ember test
+    - name: Run test modifiers
+      run: rf -rf tests && mv test-folders/modifier-tests tests ./node_modules/.bin/ember test
 
   ember-try:
     name: ember-try (${{ matrix.scenario }})
