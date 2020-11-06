@@ -28,8 +28,9 @@ const imports = {
 const Packager = require('ember-cli/lib/broccoli/default-packager');
 const processJavascript = Packager.prototype.processJavascript;
 Packager.prototype.processJavascript = function(tree) {
+  const name = this.name === 'dummy' ? 'dummy' : this.project.name();
   const funnel = new Funnel(tree, {
-    include: [/^addon-tree-output/, new RegExp('^' + this.project.name())]
+    include: [/^addon-tree-output/, new RegExp('^' + name)]
   });
   return new Merge([new VerifyImports(funnel, {
     imports: imports

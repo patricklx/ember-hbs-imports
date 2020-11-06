@@ -1,7 +1,5 @@
-import BroccoliFilter from "broccoli-persistent-filter";
-import path from "path";
-import fs from "fs";
-import md5Hex from "md5-hex";
+import BroccoliFilter from 'broccoli-persistent-filter';
+import md5Hex from 'md5-hex';
 
 class VerifyImports extends BroccoliFilter {
   options: {
