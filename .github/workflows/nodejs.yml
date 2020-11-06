@@ -27,6 +27,8 @@ jobs:
       run: rm -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
     - name: Run test modifiers
       run: rm -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
+    - name: Run tests mixed
+      run: rm -rf tests && mv test-folders/mixed-tests tests && ./node_modules/.bin/ember test
 
   ember-try:
     name: ember-try (${{ matrix.scenario }})
@@ -53,14 +55,14 @@ jobs:
         run: npm install && ./node_modules/.bin/tsc
       - name: Setup ember-try scenario
         run: ./node_modules/.bin/ember try:one ember-${{ matrix.scenario }} --skip-cleanup --- cat package.json
-      - name: Build
-        run: ./node_modules/.bin/ember build --environment test
       - name: Run test component
         run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
       - name: Run test helpers
         run: rm -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
       - name: Run test modifiers
         run: rm -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
+      - name: Run tests mixed
+        run: rm -rf tests && mv test-folders/mixed-tests tests && ./node_modules/.bin/ember test
 
   deploy:
     needs: [test, ember-try]
