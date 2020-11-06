@@ -1,0 +1,9 @@
+{{import myHelper from "ui/modifier"}}
+{{import mySecondHelper from "./modifier"}}
+{{import helperWithNumber5 from "./modifier"}}
+{{import complexHelper from "./complex-modifier"}}
+
+<div class="global" {{myHelper "I'm a globally referenced modifier"}}></div>
+<div class="local" {{mySecondHelper "I'm a locally referenced modifier"}}></div>
+<div class="local" {{helperWithNumber5 "I'm a locally referenced modifier"}}></div>
+<div class="complex" {{complexHelper "Im a complex modifier"}}></div>

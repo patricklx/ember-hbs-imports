@@ -1,15 +1,8 @@
 import * as glimmer from '@glimmer/syntax';
-import {
-  Block,
-  BlockStatement,
-  ElementNode,
-  PathExpression
-} from "@glimmer/syntax/dist/types/lib/types/nodes";
-import { NodeVisitor } from "@glimmer/syntax/dist/types/lib/traversal/visitor";
-import Path from "@glimmer/syntax/dist/types/lib/traversal/path";
-import { hash } from "spark-md5";
-import fs from 'fs';
+import { hash } from 'spark-md5';
 import path from 'path';
+import { NodeVisitor, Path } from '@glimmer/syntax';
+import { Block, BlockStatement, ElementNode, PathExpression } from '@glimmer/syntax/dist/types/lib/types/nodes';
 
 function generateScopedName(name, fullPath, namespace) {
   fullPath = fullPath.replace(/\\/g, '/');
@@ -96,12 +89,12 @@ const importProcessors = {
         if (importPath.startsWith('~/')) {
           importPath = importPath.replace('~/', this.options.namespace + '/');
         }
-        if (importPath.startsWith('ui/')) {
-          importPath = importPath.replace('ui/', this.options.namespace + '/ui/');
+        if (importPath.startsWith('ui/') || importPath === 'ui') {
+          importPath = importPath.replace(/^ui\//, this.options.namespace + '/ui/');
+          importPath = importPath.replace(/^ui$/, this.options.namespace + '/ui');
         }
         if (importPath.startsWith('.')) {
-          importPath = path.resolve(relativePath, '..', importPath).split(path.sep).join('/');
-          importPath = path.relative(this.options.root, importPath).split(path.sep).join('/');
+          importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
         }
         const hasMultiple = localName.includes(',') || localName.includes(' as ');
@@ -117,7 +110,7 @@ const importProcessors = {
           if (importName === '*') {
             const name = `${lName}\\.([^\\s\\)} |]+)`;
             imports.push({
-              node, dynamic: true, localName: name, importPath: `${importPath}/`, isLocalNameValid: true
+              node, dynamic: true, localName: name, importPath: importPath, isLocalNameValid: true
             });
             return;
           }
@@ -181,13 +174,8 @@ const importProcessors = {
         if (node.original === 'block') return;
         if (findBlockParams(node.original.split('.')[0], p)) return;
         const i = findImport(node.original);
-        if (!i && !builtInHelpers.includes(node.original) && !fs.existsSync(path.join(importProcessors.options.root, 'helpers', node.original))) {
+        if (!i && !builtInHelpers.includes(node.original)) {
           if (p.parentNode?.type === 'ElementModifierStatement') return;
-          if (this.options.failOnMissingImport) {
-            throw new Error('could not find import for path "' + node.original + '" in ' + relativePath);
-          } else {
-            console.log('could not find import for path "' + node.original + '" in ' + relativePath)
-          }
         }
         if (i) {
           const resolvedPath = importProcessors.resolvePath(i, node.original);
@@ -221,6 +209,24 @@ const importProcessors = {
         }
       },
       ElementNode: (element, p: Path<ElementNode>) => {
+        element.modifiers.forEach((modifier) => {
+          const p = modifier.path as any;
+          const i = findImport(p.original);
+          if (!i) {
+            if (!this.options.failOnBadImport) {
+              console.warn('modifier', p.original, 'is not imported');
+            } else {
+              throw new Error(`modifier ${p.original} is not imported`);
+            }
+            return;
+          }
+
+          const resolvedPath = importProcessors.resolvePath(i, p.original);
+          modifiers.add(resolvedPath);
+          imported.others.add(resolvedPath + '.js');
+          p.original = resolvedPath;
+          i.used = true;
+        });
         if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase()) return ;
         if (element.tag.startsWith(':')) return ;
         const imp = findImport(element.tag.split('.')[0]);
@@ -237,24 +243,6 @@ const importProcessors = {
           imported.components.add(resolvedPath);
           components.push([element.tag, resolvedPath]);
         }
-        element.modifiers.forEach((modifier) => {
-          const p = modifier.path as any;
-          const i = findImport(p.original);
-          if (!i) {
-            if (!this.options.failOnBadImport) {
-              console.warn('modifier', p.original, 'is not imported');
-            } else {
-              throw new Error(`modifier ${p.original} is not imported`);
-            }
-            return;
-          }
-
-          const resolvedPath = importProcessors.resolvePath(imp, p.original);
-          modifiers.add(p.original);
-          imported.others.add(resolvedPath + '.js');
-          p.original = resolvedPath;
-          i.used = true;
-        });
       }
     };
     glimmer.traverse(ast, visitor);

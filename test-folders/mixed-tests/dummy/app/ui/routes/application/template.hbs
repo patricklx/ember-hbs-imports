@@ -1,0 +1,16 @@
+{{import style from "./styles.scoped.scss"}}
+
+{{import Button from "~/ui/components/button"}}
+{{import helper from "~/ui/helpers/helper"}}
+{{import modifier from "~/ui/modifiers/modifier"}}
+
+
+<Button>I'm a globally referenced button</Button>
+<div class="style {{style.custom}}">{{style.custom}}</div>
+{{#if (helper 5)}}
+  <div class="local"></div>
+{{/if}}
+
+<div class="modifiers"
+  {{modifier "modifier"}}
+/>

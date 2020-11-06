@@ -1,0 +1,131 @@
+name: Test, Build & Publish
+
+on:
+  create:
+    tags: '**'
+  push:
+    branches: '**'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Use Node.js
+      uses: actions/setup-node@v1
+      with:
+        node-version: 12.x
+    - name: npm install, build
+      run: |
+        npm install
+        ./node_modules/.bin/tsc
+      env:
+        CI: true
+    - name: Run test component
+      run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
+    - name: Run test helpers
+      run: rm -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
+    - name: Run test modifiers
+      run: rm -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
+    - name: Run tests mixed
+      run: rm -rf tests && mv test-folders/mixed-tests tests && ./node_modules/.bin/ember test
+
+  ember-try:
+    name: ember-try (${{ matrix.scenario }})
+    needs: test
+    runs-on: ubuntu-latest
+    env:
+      CI: 'true'
+    strategy:
+      matrix:
+        scenario:
+          - release
+          - lts-3.12
+        include:
+          - scenario: beta
+            experimental: true
+          - scenario: canary
+            experimental: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v1
+      - name: Set up Volta
+        uses: rwjblue/setup-volta@v1
+      - name: Install dependencies (npm)
+        run: npm install && ./node_modules/.bin/tsc
+      - name: Setup ember-try scenario
+        run: ./node_modules/.bin/ember try:one ember-${{ matrix.scenario }} --skip-cleanup --- cat package.json
+      - name: Run test component
+        run: mv test-folders/component-tests tests && ./node_modules/.bin/ember test
+      - name: Run test helpers
+        run: rm -rf tests && mv test-folders/helper-tests tests && ./node_modules/.bin/ember test
+      - name: Run test modifiers
+        run: rm -rf tests && mv test-folders/modifier-tests tests && ./node_modules/.bin/ember test
+      - name: Run tests mixed
+        run: rm -rf tests && mv test-folders/mixed-tests tests && ./node_modules/.bin/ember test
+
+  deploy:
+    needs: [test, ember-try]
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        node-version: [12.x]
+    steps:
+      - uses: actions/checkout@v1
+      - name: Use Node.js
+        uses: actions/setup-node@v1
+        with:
+          node-version: 12.x
+      - name: npm install, build, and deploy docs
+        run: |
+          mkdir ~/.ssh
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          npm install
+          ./node_modules/.bin/tsc
+        env:
+          CI: true
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+      - name: deploy npm
+        if: github.ref == 'refs/heads/master'
+        run: |
+          version=$(cat package.json | jq -r '.version')
+          TAG=v$version
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "tag exists";
+          else
+            echo "//registry.npmjs.org/:_authToken=${NPM_TOKEN}" > .npmrc
+            npm publish || echo "already published"
+          fi
+        env:
+          NPM_TOKEN: "${{ secrets.NPM_TOKEN }}"
+      - name: create tag
+        if: github.ref == 'refs/heads/master'
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_COMMIT: ${{ github.sha }}
+        run: |
+          version=$(cat package.json | jq -r '.version')
+          TAG=v$version
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "tag exists";
+          else
+            curl -X POST -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" https://api.github.com/repos/patricklx/carbon-components-ember/git/refs -d "{ \"ref\": \"refs/tags/$TAG\", \"sha\": \"$GITHUB_COMMIT\" }"
+          fi
+      - name: Create a Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version=$(cat package.json | jq -r '.version')
+          TAG=v$version
+          url="https://api.github.com/repos/patricklx/carbon-components-ember/releases"
+          exists=$(curl -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" $url | jq ".[] | select(.tag_name == \"$TAG\") | .id")
+          if [[ -z $exists ]]; then
+            npm i -g lerna-changelog
+            export GITHUB_AUTH=$GITHUB_TOKEN
+            changelog=$(lerna-changelog)
+            curl -X POST -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" $url -d "{ \"tag_name\": \"$TAG\", \"name\": \"$TAG\", \"body\": \"$changelog\", \"draft\": false, \"prerelease\": false}"
+          else
+            echo "release already exists";
+          fi;

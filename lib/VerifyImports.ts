@@ -1,10 +1,10 @@
-import BroccoliFilter from "broccoli-persistent-filter";
-import path from "path";
-import fs from "fs";
-import md5Hex from "md5-hex";
+import BroccoliFilter from 'broccoli-persistent-filter';
+import md5Hex from 'md5-hex';
 
 class VerifyImports extends BroccoliFilter {
-  options: {};
+  options: {
+    failOnMissingImport: boolean
+  };
   imports: {
     from: Record<string, string[]>
   };
@@ -29,6 +29,9 @@ class VerifyImports extends BroccoliFilter {
     Object.entries(imports.from).forEach(([from, imps]) => {
       const notFound = imps.filter((i) => !this.files.has(i) && !this.files.has(i + '.js'));
       if (notFound.length) {
+        if (this.options.failOnMissingImport) {
+          throw new Error(from + ':imports not found -> ' + notFound)
+        }
         console.error(from,':imports not found', notFound);
       }
     })

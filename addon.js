@@ -28,8 +28,9 @@ const imports = {
 const Packager = require('ember-cli/lib/broccoli/default-packager');
 const processJavascript = Packager.prototype.processJavascript;
 Packager.prototype.processJavascript = function(tree) {
+  const name = this.name === 'dummy' ? 'dummy' : this.project.name();
   const funnel = new Funnel(tree, {
-    include: [/^addon-tree-output/, new RegExp('^' + this.project.name())]
+    include: [/^addon-tree-output/, new RegExp('^' + name)]
   });
   return new Merge([new VerifyImports(funnel, {
     imports: imports
@@ -57,6 +58,7 @@ module.exports = {
         return stew.mv(new Merge([ originalOutput, scopedOutput ]), this.treePaths.styles + '/' + this.name);
       }
     }
+    this._super.included.call(this, arguments);
   },
 
   treeForStyles(tree) {
@@ -90,7 +92,15 @@ module.exports = {
       ext: 'hbs',
       toTree: (tree) => {
         const name = typeof self.parent.name === 'function' ? self.parent.name() : self.parent.name;
-        tree = new TemplateImportProcessor(tree, { root: this.project.root, namespace: name, imports: this.imports });
+        const isDummy = isDummyAppBuild(self);
+        const options = {
+          root: path.join(this.project.root, ...(isDummy ? ['tests','dummy'] : [])),
+          failOnMissingImport: false,
+          failOnBadImport: false,
+          namespace: isDummy ? 'dummy' : name,
+          imports: this.imports
+        }
+        tree = new TemplateImportProcessor(tree, options);
         return tree;
       }
     });

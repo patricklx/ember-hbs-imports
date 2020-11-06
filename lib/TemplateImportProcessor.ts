@@ -34,7 +34,7 @@ export default class TemplateImportProcessor extends BroccoliFilter {
   }
 
   processString(contents, relativePath) {
-    importProcessor.options.root = this.options.root;
+    importProcessor.options = Object.assign({}, this.options);
     const [res, imports] = importProcessor.processAst(contents, relativePath);
     this.options.imports.from[relativePath] = [];
     imports.components.forEach((comp) => {
