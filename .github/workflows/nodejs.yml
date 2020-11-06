@@ -122,7 +122,7 @@ jobs:
           url="https://api.github.com/repos/patricklx/ember-template-imports/releases"
           exists=$(curl -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" $url | jq ".[] | select(.tag_name == \"$TAG\") | .id")
           if [[ -z $exists ]]; then
-            npm i lerna-changelog
+            npm i lerna-changelog || echo "its okay"
             export GITHUB_AUTH=$GITHUB_TOKEN
             changelog=$(./node_modules/.bin/lerna-changelog)
             curl -X POST -H "Content-Type: application/json" -H "Authorization: token $GITHUB_TOKEN" $url -d "{ \"tag_name\": \"$TAG\", \"name\": \"$TAG\", \"body\": \"$changelog\", \"draft\": false, \"prerelease\": false}"
