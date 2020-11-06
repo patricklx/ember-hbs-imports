@@ -1,15 +1,8 @@
 import * as glimmer from '@glimmer/syntax';
-import {
-  Block,
-  BlockStatement,
-  ElementNode,
-  PathExpression
-} from "@glimmer/syntax/dist/types/lib/types/nodes";
-import { NodeVisitor } from "@glimmer/syntax/dist/types/lib/traversal/visitor";
-import Path from "@glimmer/syntax/dist/types/lib/traversal/path";
-import { hash } from "spark-md5";
-import fs from 'fs';
+import { hash } from 'spark-md5';
 import path from 'path';
+import { NodeVisitor, Path } from '@glimmer/syntax';
+import { Block, BlockStatement, ElementNode, PathExpression } from '@glimmer/syntax/dist/types/lib/types/nodes';
 
 function generateScopedName(name, fullPath, namespace) {
   fullPath = fullPath.replace(/\\/g, '/');

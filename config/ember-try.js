@@ -22,7 +22,7 @@ module.exports = function() {
 
         {
 
-          name: 'ember-lts-2.16',
+          name: 'ember-lts-3.12',
 
           env: {
 
@@ -36,7 +36,7 @@ module.exports = function() {
 
               '@ember/jquery': '^0.5.1',
 
-              'ember-source': '~2.16.0'
+              'ember-source': '~3.12.0'
 
             }
 
