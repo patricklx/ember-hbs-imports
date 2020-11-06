@@ -91,7 +91,7 @@ const importProcessors = {
         }
         if (importPath.startsWith('ui/') || importPath === 'ui') {
           importPath = importPath.replace(/^ui\//, this.options.namespace + '/ui/');
-          importPath = importPath.replace(/^ui$/, this.options.namespace + '/ui/');
+          importPath = importPath.replace(/^ui$/, this.options.namespace + '/ui');
         }
         if (importPath.startsWith('.')) {
           importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
