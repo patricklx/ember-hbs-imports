@@ -36,6 +36,7 @@ Syntax:
 ```hbs
 {{import myHelper from 'ui/helper'}}
 {{import my-mod from 'ui/modifiers'}}
+{{import style from './styles.scoped.scss'}}
 {{import BasicDropdown from 'ember-basic-dropdown/components/basic-dropdown'}}
 {{import SameDropdown from 'ember-basic-dropdown/components/basic-dropdown'}}
 
@@ -51,8 +52,8 @@ Syntax:
 {{myHelper 'a'}}
 {{helpers.x 'a'}}
 
-<BasicDropdown />
-<SameDropdown />
+<BasicDropdown class={{style.myclass}} />
+<SameDropdown @param={{style.myclass}} />
 
 <a {{my-mod}} />
 ```
