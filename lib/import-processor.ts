@@ -233,8 +233,11 @@ const importProcessors = {
         const imp = findImport(element.tag.split('.')[0]);
         if (findBlockParams(element.tag.split('.')[0], p)) return;
         if (builtInComponents.includes(element.tag)) return;
-        if (!imp) {
+        if (!imp && this.options.failOnMissingImport) {
           throw new Error('could not find import for element ' + element.tag + ' in ' + relativePath);
+        } else {
+          console.log('warn', 'could not find import for element ' + element.tag + ' in ' + relativePath);
+          return;
         }
         if (imp) {
           const resolvedPath = importProcessors.resolvePath(imp, element.tag);
