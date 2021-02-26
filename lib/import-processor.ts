@@ -205,7 +205,7 @@ const importProcessors = {
           }
           // its a helper
           imported.others.add(resolvedPath + '.js');
-          node.original = `ember-template-imports/helpers/invoke-helper this '${resolvedPath}'`;
+          node.original = `ember-hbs-imports/helpers/invoke-helper this '${resolvedPath}'`;
           i.used = true;
         }
       },

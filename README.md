@@ -1,4 +1,4 @@
-ember-template-imports
+ember-hbs-imports
 ==============================================================================
 
 merged
@@ -15,11 +15,13 @@ a helper/component and import styles within a template file.
 * Relative imports!
 
 
+there is now an official addon for imports at https://github.com/ember-template-imports/ember-template-imports
+
 Installation
 ------------------------------------------------------------------------------
 
 ```
-ember install ember-template-imports
+ember install ember-hbs-imports
 ```
 
 
@@ -61,7 +63,7 @@ Syntax:
 The helper is looked up from the given string using a direct lookup
 pattern. I set the `resolveHelper` in the resolver. 
 All this addon does is taking that `{{import ...}}` statement
-and replacing all helper invocations with `{{ember-template-helper-import/helpers/invoke-helper 'myHelper' ...}}`.
+and replacing all helper invocations with `{{ember-hbs-import/helpers/invoke-helper 'myHelper' ...}}`.
 
 Our helper then looks up the actual helper and calls `compute` with the other arguments
 
@@ -72,19 +74,6 @@ Motivation
 already gives us import for components, but I really miss the helper imports.
 So I went ahead and added this functionality :)
 
-
-But what about Module Unification?
-------------------------------------------------------------------------------
-
-Once Module Unification lands fully, this addon will be largely obsolete. MU
-provides all these benefits and more.
-
-So on the one hand, your templates will start to look _something kinda like_
-MU a little sooner, which is nice.
-
-But be warned - any official tooling to codemod templates into a new MU world
-likely won't support this addon. So weigh the pros and cons carefully before
-widely adopting this addon.
 
 License
 ------------------------------------------------------------------------------

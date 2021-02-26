@@ -1,9 +1,9 @@
 {
-  "name": "ember-template-imports",
-  "version": "0.2.14",
+  "name": "ember-hbs-imports",
+  "version": "0.3.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/patricklx/ember-template-imports"
+    "url": "https://github.com/patricklx/ember-hbs-imports"
   },
   "description": "Adds template imports for ember hbs",
   "keywords": [
