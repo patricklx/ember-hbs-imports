@@ -1,6 +1,6 @@
 {
   "name": "ember-hbs-imports",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricklx/ember-hbs-imports"
@@ -73,7 +73,8 @@
     "node-sass": "^5.0.0",
     "qunit-dom": "^0.8.0",
     "semantic-release": "^15.13.2",
-    "typescript": "^4.0.0"
+    "typescript": "^4.0.0",
+    "md5-hex": "^2.0.0"
   },
   "resolutions": {
     "minimist": "^1.2.5",
