@@ -256,6 +256,22 @@ const importProcessors = {
     const createLetBlockExpr = (comp: [string, string]) => {
       return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1]}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
     };
+    const handleHelper = (helper: { node: PathExpression, resolvedPath: string }) => {
+      if (this.options.useModifierHelperHelpers) {
+        const lookup = `(ember-hbs-imports-lookup-helper this "${helper.resolvedPath}")`
+        return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.node.original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+      } else {
+        helper.node.original = `ember-hbs-imports/helpers/invoke-helper this '${helper.resolvedPath}'`;
+      }
+    };
+    const handleModifier = (helper: { node: PathExpression, resolvedPath: string }) => {
+      if (this.options.useModifierHelperHelpers) {
+        const lookup = `(ember-hbs-imports-lookup-modifier this "${helper.resolvedPath}")`
+        return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.node.original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+      } else {
+        helper.node.original = helper.resolvedPath;
+      }
+    };
 
     let body: glimmer.AST.TopLevelStatement[] = [];
     const root = body;
