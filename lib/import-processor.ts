@@ -69,7 +69,8 @@ const importProcessors = {
     root: '',
     namespace: '',
     failOnBadImport: false,
-    failOnMissingImport: false
+    failOnMissingImport: false,
+    useModifierHelperHelpers: false
   },
   glimmer,
   resolvePath(imp, name) {
@@ -131,6 +132,8 @@ const importProcessors = {
   replaceInAst(ast: glimmer.AST.Template, relativePath: string) {
     const imported = {
       components: new Set<string>(),
+      helpers: new Set<string>(),
+      modifiers: new Set<string>(),
       others: new Set<string>()
     }
     const imports = this.parseImports(ast.body, relativePath);
@@ -142,8 +145,9 @@ const importProcessors = {
         ast.body.splice(index, 1);
       }
     });
-    const components: any[] = [];
-    const modifiers = new Set();
+    const components: {[x:string]: string} = {};
+    const helpers: {[x:string]: {nodes: PathExpression[], resolvedPath: string}} = {};
+    const modifiers: {[x:string]: {nodes: PathExpression[], resolvedPath: string}} = {};
     function findImport(name: string) {
       return imports.find((imp) => {
         if (imp.isStyle) {
@@ -195,17 +199,18 @@ const importProcessors = {
           }
           if (node.original[0] === node.original[0].toUpperCase()) {
             imported.components.add(resolvedPath);
-            components.push([node.original, resolvedPath]);
+            components[node.original] = resolvedPath;
             i.used = true;
             return;
           }
-          if (modifiers.has(node.original)) {
+          if (modifiers[node.original]) {
             i.used = true;
             return;
           }
           // its a helper
           imported.others.add(resolvedPath + '.js');
-          node.original = `ember-hbs-imports/helpers/invoke-helper this '${resolvedPath}'`;
+          helpers[node.original] = helpers[node.original] || { nodes: [], resolvedPath };
+          helpers[node.original].nodes.push(node);
           i.used = true;
         }
       },
@@ -223,9 +228,9 @@ const importProcessors = {
           }
 
           const resolvedPath = importProcessors.resolvePath(i, p.original);
-          modifiers.add(resolvedPath);
+          modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [] };
+          modifiers[p.original].nodes.push(p);
           imported.others.add(resolvedPath + '.js');
-          p.original = resolvedPath;
           i.used = true;
         });
         if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase()) return ;
@@ -248,37 +253,53 @@ const importProcessors = {
             element.tag = element.tag.split('.').slice(-1)[0];
           }
           imported.components.add(resolvedPath);
-          components.push([element.tag, resolvedPath]);
+          components[element.tag] = resolvedPath;
         }
       }
     };
     glimmer.traverse(ast, visitor);
-    const createLetBlockExpr = (comp: [string, string]) => {
+    const createComponentLetBlockExpr = (comp: [string, string]) => {
       return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1]}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
     };
-    const handleHelper = (helper: { node: PathExpression, resolvedPath: string }) => {
+    const handleHelper = (helper: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
         const lookup = `(ember-hbs-imports-lookup-helper this "${helper.resolvedPath}")`
-        return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.node.original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+        return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
-        helper.node.original = `ember-hbs-imports/helpers/invoke-helper this '${helper.resolvedPath}'`;
+        helper.nodes.forEach(node => {
+          node.original = `ember-hbs-imports/helpers/invoke-helper this '${helper.resolvedPath}'`;
+        });
       }
     };
-    const handleModifier = (helper: { node: PathExpression, resolvedPath: string }) => {
+    const handleModifier = (modifier: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
-        const lookup = `(ember-hbs-imports-lookup-modifier this "${helper.resolvedPath}")`
-        return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.node.original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+        const lookup = `(ember-hbs-imports-lookup-modifier this "${modifier.resolvedPath}")`
+        return importProcessors.glimmer.preprocess(`{{#let (modifier ${lookup}) as |${modifier.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
-        helper.node.original = helper.resolvedPath;
+        modifier.nodes.forEach(node => {
+          node.original = modifier.resolvedPath;
+        });
       }
     };
 
     let body: glimmer.AST.TopLevelStatement[] = [];
     const root = body;
-    components.forEach((c) => {
-      const letComponent = createLetBlockExpr(c);
+    Object.entries(components).forEach((c) => {
+      const letComponent = createComponentLetBlockExpr(c);
       body.push(letComponent);
       body = letComponent.program.body;
+    });
+    Object.values(helpers).forEach((c) => {
+      const letHelper = handleHelper(c);
+      if (!letHelper) return;
+      body.push(letHelper);
+      body = letHelper.program.body;
+    });
+    Object.values(modifiers).forEach((c) => {
+      const letModifier = handleModifier(c);
+      if (!letModifier) return;
+      body.push(letModifier);
+      body = letModifier.program.body;
     });
     body.push(...ast.body);
     ast.body = root;

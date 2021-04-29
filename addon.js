@@ -65,6 +65,7 @@ module.exports = {
     // treeForAddonStyles to process them for scoping.
     if (isAddon(this.parent)) {
       const original = this.parent.treeForStyles || ((t) => t);
+      // eslint-disable-next-line @typescript-eslint/no-this-alias
       const self = this;
       this.parent.treeForStyles = function(stylesInput = path.join(this.root, this.treePaths['addon-styles'])) {
         let originalOutput = original.call(this, stylesInput);
@@ -107,20 +108,27 @@ module.exports = {
   },
 
   setupPreprocessorRegistry(type, registry) {
+    // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     registry.add('template', {
       name: 'ember-template-imports',
       ext: 'hbs',
+      before: ['ember-cli-htmlbars'],
       toTree: (tree) => {
         const name = typeof self.parent.name === 'function' ? self.parent.name() : self.parent.name;
         const isDummy = isDummyAppBuild(self);
+
+        const VersionChecker = require('ember-cli-version-checker');
+        const checker = new VersionChecker(this);
+        const ember = checker.for('ember-source');
         const options = {
           styleExtension: this._getAddonOptions().style.extension,
           root: path.join(this.project.root, ...(isDummy ? ['tests','dummy'] : [])),
           failOnMissingImport: false,
           failOnBadImport: false,
           namespace: isDummy ? 'dummy' : name,
-          imports: this.imports
+          imports: this.imports,
+          useModifierHelperHelpers: ember.isAbove('v3.27.0-beta.2')
         }
         tree = new TemplateImportProcessor(tree, options);
         return tree;

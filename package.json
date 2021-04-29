@@ -1,6 +1,6 @@
 {
   "name": "ember-hbs-imports",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricklx/ember-hbs-imports"
@@ -38,7 +38,8 @@
     "broccoli-funnel": "^3.0.3",
     "broccoli-merge-trees": "^4.2.0",
     "spark-md5": "^3.0.1",
-    "md5-hex": "^2.0.0"
+    "md5-hex": "^2.0.0",
+    "ember-cli-version-checker": "^5.1.2"
   },
   "devDependencies": {
     "@commitlint/cli": "^7.2.1",
