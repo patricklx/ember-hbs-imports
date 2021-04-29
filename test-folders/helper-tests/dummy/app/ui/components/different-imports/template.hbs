@@ -28,7 +28,7 @@
 {{import "* as helpers" from "ui" }}
 {{import "a, b" from "ui" }}
 {{import "a as x, b as y" from "ui" }}
-{{import "a as z, helper" from "ui" }}
+{{import "a as z, helper as helper2" from "ui" }}
 
 <div class="helpers">
   {{myhelper "helper"}}
@@ -47,5 +47,5 @@
   {{b "helper"}}
   {{x "helper"}}
   {{y "helper"}}
-  {{helper "helper"}}
+  {{helper2 "helper"}}
 </div>

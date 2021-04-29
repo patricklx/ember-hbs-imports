@@ -28,7 +28,7 @@
 {{import "* as modifiers" from "ui" }}
 {{import "a, b" from "ui" }}
 {{import "a as x, b as y" from "ui" }}
-{{import "a as z, modifier" from "ui" }}
+{{import "a as z, modifier as mod2" from "ui" }}
 
 <div class="modifiers"
   {{mymodifier "modifier"}}
@@ -47,6 +47,6 @@
   {{b "modifier"}}
   {{x "modifier"}}
   {{y "modifier"}}
-  {{modifier "modifier"}}
+  {{mod2 "modifier"}}
 >
 </div>
