@@ -195,9 +195,10 @@ const importProcessors = {
             return;
           }
           if (node.original.includes('.')) {
-            node.original = node.original.split('.').slice(-1)[0];
+            node.original = node.original.replace(/\./g, '_import_');
           }
-          if (node.original[0] === node.original[0].toUpperCase()) {
+          const firstLetter = node.original.split('_import_').slice(-1)[0];
+          if (firstLetter === firstLetter.toUpperCase()) {
             imported.components.add(resolvedPath);
             components[node.original] = resolvedPath;
             i.used = true;
@@ -228,6 +229,9 @@ const importProcessors = {
           }
 
           const resolvedPath = importProcessors.resolvePath(i, p.original);
+          if (p.original.includes('.')) {
+            p.original = p.original.replace(/\./g, '_import_');
+          }
           modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [] };
           modifiers[p.original].nodes.push(p);
           imported.others.add(resolvedPath + '.js');
@@ -250,7 +254,7 @@ const importProcessors = {
         if (imp) {
           const resolvedPath = importProcessors.resolvePath(imp, element.tag);
           if (element.tag.includes('.')) {
-            element.tag = element.tag.split('.').slice(-1)[0];
+            element.tag = element.tag.replace(/\./g, '_import_');
           }
           imported.components.add(resolvedPath);
           components[element.tag] = resolvedPath;
