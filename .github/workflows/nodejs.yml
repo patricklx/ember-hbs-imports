@@ -34,6 +34,7 @@ jobs:
     name: ember-try (${{ matrix.scenario }})
     needs: test
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
     env:
       CI: 'true'
     strategy:
