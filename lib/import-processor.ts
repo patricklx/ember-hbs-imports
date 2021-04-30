@@ -197,6 +197,7 @@ const importProcessors = {
           if (node.original.includes('.')) {
             node.original = node.original.replace(/\./g, '_import_');
           }
+          node.original = 'imported_' + node.original;
           const firstLetter = node.original.split('_import_').slice(-1)[0][0];
           if (firstLetter === firstLetter.toUpperCase()) {
             imported.components.add(resolvedPath);
@@ -232,6 +233,7 @@ const importProcessors = {
           if (p.original.includes('.')) {
             p.original = p.original.replace(/\./g, '_import_');
           }
+          p.original = 'imported_' + p.original;
           modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [] };
           modifiers[p.original].nodes.push(p);
           imported.others.add(resolvedPath + '.js');
@@ -263,12 +265,12 @@ const importProcessors = {
     };
     glimmer.traverse(ast, visitor);
     const createComponentLetBlockExpr = (comp: [string, string]) => {
-      return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1]}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+      return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1]}") as |imported_${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
     };
     const handleHelper = (helper: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
         const lookup = `(ember-hbs-imports/helpers/lookup-helper this "${helper.resolvedPath}")`
-        return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+        return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |imported_${helper.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         helper.nodes.forEach(node => {
           node.original = `ember-hbs-imports/helpers/invoke-helper this '${helper.resolvedPath}'`;
@@ -278,7 +280,7 @@ const importProcessors = {
     const handleModifier = (modifier: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
         const lookup = `(ember-hbs-imports/helpers/lookup-modifier this "${modifier.resolvedPath}")`
-        return importProcessors.glimmer.preprocess(`{{#let (modifier ${lookup}) as |${modifier.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+        return importProcessors.glimmer.preprocess(`{{#let (modifier ${lookup}) as |imported_${modifier.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         modifier.nodes.forEach(node => {
           node.original = modifier.resolvedPath;
