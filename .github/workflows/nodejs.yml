@@ -38,7 +38,9 @@ jobs:
     env:
       CI: 'true'
     strategy:
+      fail-fast: false
       matrix:
+        experimental: [false]
         scenario:
           - release
           - lts-3.12
