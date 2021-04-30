@@ -10,7 +10,7 @@ module('Acceptance | import', function(hooks) {
     assert.equal(find('.global-button').innerText, 'I\'m a globally referenced button');
     assert.equal(find('.local-button').innerText, 'I\'m a locally referenced button');
 
-    assert.equal(findAll('.global-button').length, 2);
-    assert.equal(findAll('.local-button').length, 3);
+    assert.equal(findAll('.global-button').length, 3);
+    assert.equal(findAll('.local-button').length, 4);
   });
 });

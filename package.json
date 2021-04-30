@@ -1,6 +1,6 @@
 {
   "name": "ember-hbs-imports",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricklx/ember-hbs-imports"
@@ -21,7 +21,7 @@
     "lint:hbs": "ember-template-lint .",
     "lint:js": "./node_modules/.bin/eslint .",
     "start": "ember serve",
-    "test": "ember test",
+    "test": "tsc && ember test",
     "test-server": "ember test --s",
     "test:all": "ember try:each"
   },
