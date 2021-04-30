@@ -198,11 +198,10 @@ const importProcessors = {
           if (node.original.includes('.')) {
             node.original = node.original.replace(/\./g, '_sep_');
           }
+          const firstLetter = node.original.replace('imported_', '').split('_sep_').slice(-1)[0][0];
           if (!node.original.startsWith('imported_')) {
             node.original = 'imported_' + node.original;
           }
-
-          const firstLetter = node.original.split('_sep_').slice(-1)[0][0];
           if (firstLetter === firstLetter.toUpperCase()) {
             imported.components.add(resolvedPath);
             components[node.original] = resolvedPath;
