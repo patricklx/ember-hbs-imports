@@ -263,7 +263,7 @@ const importProcessors = {
     };
     const handleHelper = (helper: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
-        const lookup = `(ember-hbs-imports-lookup-helper this "${helper.resolvedPath}")`
+        const lookup = `(ember-hbs-imports/helpers/lookup-helper this "${helper.resolvedPath}")`
         return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         helper.nodes.forEach(node => {
@@ -273,7 +273,7 @@ const importProcessors = {
     };
     const handleModifier = (modifier: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
-        const lookup = `(ember-hbs-imports-lookup-modifier this "${modifier.resolvedPath}")`
+        const lookup = `(ember-hbs-imports/helpers/lookup-modifier this "${modifier.resolvedPath}")`
         return importProcessors.glimmer.preprocess(`{{#let (modifier ${lookup}) as |${modifier.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         modifier.nodes.forEach(node => {
