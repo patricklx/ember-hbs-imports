@@ -1,15 +1,10 @@
 import Helper from '@ember/component/helper';
 import { later } from '@ember/runloop';
-import { getOwner } from '@ember/application';
 
-export default Helper.extend({
-  text: 'abc',
-  init(...args) {
-    this._super(...args);
-    const o = getOwner(this);
-    if (!o) throw new Error('no owner');
-  },
-  compute() {
+
+export default class ComplexHelper extends Helper {
+  text = 'abc';
+  compute(params, hash) {
     if (this.text === 'abc') {
       setTimeout(() => {
         later(() => {
@@ -20,4 +15,5 @@ export default Helper.extend({
     }
     return this.text;
   }
-});
+}
+ComplexHelper.class = ComplexHelper;
