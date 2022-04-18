@@ -85,6 +85,9 @@
   "engines": {
     "node": "6.* || 8.* || >= 10.*"
   },
+  "ember": {
+    "edition": "octane"
+  },
   "ember-addon": {
     "main": "addon.js",
     "before": [
