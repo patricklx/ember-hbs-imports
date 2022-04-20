@@ -1,9 +1,9 @@
 import { getOwner } from '@ember/application';
-import { helper } from '@ember/component/helper';
+import Helper from '@ember/component/helper';
 
-function lookupModifier([context, path]) {
-  const m = getOwner(context).factoryFor(`modifier:${path}`);
-  return m.class;
-}
+export default Helper.extend({
+  compute([context, path]) {
+    return getOwner(context||this).factoryFor(`modifier:${path}`)?.class;
+  }
+});
 
-export default helper(lookupModifier);

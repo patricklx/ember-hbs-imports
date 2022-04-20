@@ -2,21 +2,21 @@ import Helper from '@ember/component/helper';
 import { getOwner, setOwner } from '@ember/application';
 
 
-export const helper = Helper.extend({
+const helper = Helper.extend({
   compute([context, helper, ...args], hash) {
     if (!this.h) {
-      this.h = getOwner(context).lookup(`helper:${helper}`);
+      this.h = getOwner(context||this).lookup(`helper:${helper}`);
       if (this.h && this.h.create) {
         const H = this.h;
         if (H.prototype && H.prototype.init) {
           const ini = H.prototype.init;
           H.prototype.init = function(...iniargs) {
-            setOwner(this, getOwner(context));
+            setOwner(this, getOwner(context||this));
             ini.call(this, ...iniargs);
           }
         }
         this.h = H.create();
-        setOwner(this.h, getOwner(context));
+        setOwner(this.h, getOwner(context||this));
         this.h.recompute = this.recompute.bind(this);
       }
       if (!this.h || !this.h.compute) {
