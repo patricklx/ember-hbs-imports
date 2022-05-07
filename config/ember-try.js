@@ -16,8 +16,6 @@ module.exports = function() {
 
     return {
 
-      useYarn: true,
-
       scenarios: [
 
         {
