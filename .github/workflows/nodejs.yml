@@ -17,8 +17,6 @@ jobs:
         node-version: 14.x
     - name: npm install, build
       run: |
-        npm install -g npm-check-updates
-        ncu -u
         npm install
         ./node_modules/.bin/tsc
       env:
