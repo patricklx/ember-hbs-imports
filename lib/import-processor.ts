@@ -67,6 +67,7 @@ const importProcessors = {
   options: {
     styleExtension: 'scss',
     root: '',
+    warn: true,
     namespace: '',
     failOnBadImport: false,
     failOnMissingImport: false,
@@ -182,6 +183,11 @@ const importProcessors = {
         const i = findImport(node.original);
         if (!i && !builtInHelpers.includes(node.original)) {
           if (p.parentNode?.type === 'ElementModifierStatement') return;
+          if (!this.options.failOnBadImport) {
+            this.options.warn && console.warn('path', p.original, 'is not imported');
+          } else {
+            throw new Error(`modifier ${p.original} is not imported`);
+          }
         }
         if (i) {
           const resolvedPath = importProcessors.resolvePath(i, node.original);
@@ -225,7 +231,7 @@ const importProcessors = {
           const i = findImport(p.original);
           if (!i) {
             if (!this.options.failOnBadImport) {
-              console.warn('modifier', p.original, 'is not imported');
+              this.options.warn && console.warn('modifier', p.original, 'is not imported');
             } else {
               throw new Error(`modifier ${p.original} is not imported`);
             }
@@ -254,10 +260,10 @@ const importProcessors = {
           if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase()) return ;
           if (this.options.failOnMissingImport) {
             throw new Error('could not find import for element ' + element.tag + ' in ' + relativePath);
-          } else {
+          } else if (this.options.warn) {
             console.log('warn', 'could not find import for element ' + element.tag + ' in ' + relativePath);
-            return;
           }
+          return;
         }
         if (imp) {
           const resolvedPath = importProcessors.resolvePath(imp, element.tag);
