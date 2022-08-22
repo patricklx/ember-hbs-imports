@@ -2,6 +2,7 @@
 {{import mySecondHelper from "./helper"}}
 {{import helperWithNumber5 from "./helper"}};
 {{import complexHelper from "./complex-helper"}};
+{{import multiple from "ui/multiple"}};
 
 <div class="global">{{myHelper "I'm a globally referenced helper"}}</div>
 <div class="local">{{mySecondHelper "I'm a locally referenced helper"}}</div>
@@ -15,3 +16,6 @@
 {{/if}}
 
 <div class="complex">{{complexHelper 0}}</div>
+
+<div class="multiple">{{multiple.helper1 0}}</div>
+<div class="multiple">{{multiple.helper2 0}}</div>
