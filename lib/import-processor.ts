@@ -2,7 +2,7 @@ import * as glimmer from '@glimmer/syntax';
 import { hash } from 'spark-md5';
 import path from 'path';
 import { NodeVisitor, Path } from '@glimmer/syntax';
-import { Block, BlockStatement, ElementNode, PathExpression } from '@glimmer/syntax/dist/types/lib/types/nodes';
+import { Block, BlockStatement, ElementNode, PathExpression, SubExpression } from '@glimmer/syntax/dist/types/lib/types/nodes';
 
 function generateScopedName(name, fullPath, namespace) {
   fullPath = fullPath.replace(/\\/g, '/');
@@ -18,7 +18,7 @@ function generateErrorMessage(options) {
 type Import = {
   isStyle?: boolean;
   used?: boolean;
-  node: glimmer.AST.Node;
+  node: glimmer.AST.MustacheStatement;
   dynamic?: boolean;
   localName: string;
   importPath: string;
@@ -193,9 +193,9 @@ const importProcessors = {
         if (!i && !builtInHelpers.includes(node.original)) {
           if (p.parentNode?.type === 'ElementModifierStatement') return;
           if (!this.options.failOnBadImport) {
-            this.options.warn && console.warn('path', p.original, 'is not imported');
+            this.options.warn && console.warn('path', node.original, 'is not imported');
           } else {
-            throw new Error(`modifier ${p.original} is not imported`);
+            throw new Error(`modifier ${node.original} is not imported`);
           }
         }
         if (i) {
@@ -203,6 +203,7 @@ const importProcessors = {
           if (i.isStyle) {
             const name = node.original.split('.').slice(1).join('_');
             node.type = 'StringLiteral' as any;
+            node.loc = i.node.params[2].loc;
             delete (node as any).parts;
             node.original = generateScopedName(name, resolvedPath, this.options.namespace);
             (node as any).value = generateScopedName(name, resolvedPath, this.options.namespace);
@@ -237,6 +238,7 @@ const importProcessors = {
           if (this.options.useSafeImports) {
             node.original = 'imported_' + node.original;
           }
+          node.original = node.original.replace(/-/g, '_');
           if (node.parts) {
             node.parts[0] = node.original;
           }
@@ -263,6 +265,7 @@ const importProcessors = {
           if (p.original.includes('.')) {
             p.original = p.original.replace(/\./g, '_sep_');
           }
+          p.original = p.original.replace(/-/g, '_');
           if (this.options.useSafeImports && !p.original.startsWith('imported_')) {
             p.original = 'imported_' + p.original;
             if (p.parts) {
@@ -337,18 +340,27 @@ const importProcessors = {
     const root = body;
     Object.entries(components).forEach((c) => {
       const letComponent = createComponentLetBlockExpr(c);
+      const i = imports.find(i => i.localName === c[0].replace('imported_', ''))!;
+      const node = i.node.params[2];
+      (letComponent.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letComponent);
       body = letComponent.program.body;
     });
     Object.values(helpers).forEach((c) => {
       const letHelper = handleHelper(c);
       if (!letHelper) return;
+      const i = imports.find(i => i.localName === c.nodes[0].original.replace('imported_', '').replace(/_/, '-'))!;
+      const node = i.node.params[2];
+      (letHelper.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letHelper);
       body = letHelper.program.body;
     });
     Object.values(modifiers).forEach((c) => {
       const letModifier = handleModifier(c);
       if (!letModifier) return;
+      const i = imports.find(i => i.localName === c.nodes[0].original.replace('imported_', '').replace(/_/, '-'))!;
+      const node = i.node.params[2];
+      (letModifier.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letModifier);
       body = letModifier.program.body;
     });
