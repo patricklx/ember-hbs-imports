@@ -11,6 +11,10 @@ function generateScopedName(name, fullPath, namespace) {
   return `${namespace}_${prefix}_${name}_${hash(hashKey).slice(0, 5)}`;
 }
 
+function generateErrorMessage(options) {
+
+}
+
 type Import = {
   isStyle?: boolean;
   used?: boolean;
@@ -71,7 +75,9 @@ const importProcessors = {
     namespace: '',
     failOnBadImport: false,
     failOnMissingImport: false,
-    useModifierHelperHelpers: false
+    useModifierHelperHelpers: false,
+    useHelperWrapper: true,
+    useSafeImports: false
   },
   glimmer,
   resolvePath(imp, name) {
@@ -98,6 +104,9 @@ const importProcessors = {
           importPath = importPath.replace(/^ui$/, this.options.namespace + '/ui');
         }
         if (importPath.startsWith('.')) {
+          relativePath = relativePath.replace(/^app\//, this.options.root + '/');
+          relativePath = relativePath.replace(/^addon\//, this.options.root + '/');
+          relativePath = relativePath.replace(/^src\//, this.options.root + '/');
           importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
         }
@@ -205,10 +214,16 @@ const importProcessors = {
             node.original = node.original.replace(/\./g, '_sep_');
           }
           const firstLetter = node.original.replace('imported_', '').split('_sep_').slice(-1)[0][0];
-          if (!node.original.startsWith('imported_')) {
+          if (this.options.useSafeImports && !node.original.startsWith('imported_')) {
             node.original = 'imported_' + node.original;
           }
           if (firstLetter === firstLetter.toUpperCase()) {
+            if (this.options.useSafeImports) {
+              node.original = 'Imported_' + node.original;
+            }
+            if (node.parts) {
+              node.parts[0] = node.original;
+            }
             imported.components.add(resolvedPath);
             components[node.original] = resolvedPath;
             i.used = true;
@@ -219,6 +234,12 @@ const importProcessors = {
             return;
           }
           // its a helper
+          if (this.options.useSafeImports) {
+            node.original = 'imported_' + node.original;
+          }
+          if (node.parts) {
+            node.parts[0] = node.original;
+          }
           imported.others.add(resolvedPath + '.js');
           helpers[node.original] = helpers[node.original] || { nodes: [], resolvedPath };
           helpers[node.original].nodes.push(node);
@@ -242,8 +263,11 @@ const importProcessors = {
           if (p.original.includes('.')) {
             p.original = p.original.replace(/\./g, '_sep_');
           }
-          if (!p.original.startsWith('imported_')) {
+          if (this.options.useSafeImports && !p.original.startsWith('imported_')) {
             p.original = 'imported_' + p.original;
+            if (p.parts) {
+              p.parts[0] = p.original;
+            }
           }
           modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [] };
           modifiers[p.original].nodes.push(p);
@@ -270,8 +294,8 @@ const importProcessors = {
           if (element.tag.includes('.')) {
             element.tag = element.tag.replace(/\./g, '_sep_');
           }
-          if (!element.tag.startsWith('imported_')) {
-            element.tag = 'imported_' + element.tag;
+          if (this.options.useSafeImports && !element.tag.startsWith('Imported_')) {
+            element.tag = 'Imported_' + element.tag;
           }
           imported.components.add(resolvedPath);
           components[element.tag] = resolvedPath;
@@ -284,7 +308,10 @@ const importProcessors = {
     };
     const handleHelper = (helper: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
-        const lookup = `(ember-hbs-imports/helpers/lookup-helper this "${helper.resolvedPath}")`
+        let lookup =  `"${helper.resolvedPath}"`;
+        if (this.options.useHelperWrapper) {
+          lookup = `(ember-hbs-imports/helpers/lookup-helper this "${helper.resolvedPath}")`;
+        }
         return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         helper.nodes.forEach(node => {
@@ -294,7 +321,10 @@ const importProcessors = {
     };
     const handleModifier = (modifier: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
-        const lookup = `(ember-hbs-imports/helpers/lookup-modifier this "${modifier.resolvedPath}")`
+        let lookup =  `"${modifier.resolvedPath}"`;
+        if (this.options.useHelperWrapper) {
+          lookup = `(ember-hbs-imports/helpers/lookup-modifier this "${modifier.resolvedPath}")`;
+        }
         return importProcessors.glimmer.preprocess(`{{#let (modifier ${lookup}) as |${modifier.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         modifier.nodes.forEach(node => {
