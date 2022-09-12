@@ -2,17 +2,13 @@ import * as glimmer from '@glimmer/syntax';
 import { hash } from 'spark-md5';
 import path from 'path';
 import { NodeVisitor, Path } from '@glimmer/syntax';
-import { Block, BlockStatement, ElementNode, PathExpression, SubExpression } from '@glimmer/syntax/dist/types/lib/types/nodes';
+import { Block, BlockStatement, ElementNode, PathExpression, SubExpression, Node } from '@glimmer/syntax/dist/types/lib/types/nodes';
 
 function generateScopedName(name, fullPath, namespace) {
   fullPath = fullPath.replace(/\\/g, '/');
   const prefix = fullPath.split('/').slice(-2)[0];
   const hashKey = `${namespace}_${prefix}_${name}`;
   return `${namespace}_${prefix}_${name}_${hash(hashKey).slice(0, 5)}`;
-}
-
-function generateErrorMessage(options) {
-
 }
 
 type Import = {
@@ -67,7 +63,12 @@ const builtInHelpers = [
   'yield',
 ];
 
+type Msg = {
+
+};
+
 const importProcessors = {
+  errors: [] as {node: Node, msg: Msg}[],
   options: {
     styleExtension: 'scss',
     root: '',
@@ -77,7 +78,8 @@ const importProcessors = {
     failOnMissingImport: false,
     useModifierHelperHelpers: false,
     useHelperWrapper: true,
-    useSafeImports: false
+    useSafeImports: false,
+    messageFormat: 'json'
   },
   glimmer,
   resolvePath(imp, name) {
@@ -141,6 +143,7 @@ const importProcessors = {
   },
 
   replaceInAst(ast: glimmer.AST.Template, relativePath: string) {
+    this.errors = [];
     const imported = {
       components: new Set<string>(),
       helpers: new Set<string>(),
@@ -193,8 +196,9 @@ const importProcessors = {
         if (!i && !builtInHelpers.includes(node.original)) {
           if (p.parentNode?.type === 'ElementModifierStatement') return;
           if (!this.options.failOnBadImport) {
-            this.options.warn && console.warn('path', node.original, 'is not imported');
-          } else {
+            generateErrorMessage(this.options, relativePath, 'could not find import for ' + node.original, node);
+          }
+          else {
             throw new Error(`modifier ${node.original} is not imported`);
           }
         }
@@ -253,9 +257,11 @@ const importProcessors = {
           const p = modifier.path as any;
           const i = findImport(p.original);
           if (!i) {
+            if (builtInHelpers.includes(p.original)) return;
             if (!this.options.failOnBadImport) {
-              this.options.warn && console.warn('modifier', p.original, 'is not imported');
-            } else {
+              generateErrorMessage(this.options, relativePath, `modifier ${p.original} is not imported`, p);
+            }
+            else {
               throw new Error(`modifier ${p.original} is not imported`);
             }
             return;
@@ -281,14 +287,18 @@ const importProcessors = {
         if (element.tag.startsWith(':')) return ;
         if (element.tag.includes('::')) return ;
         const imp = findImport(element.tag.split('.')[0]);
-        if (findBlockParams(element.tag.split('.')[0], p)) return;
-        if (builtInComponents.includes(element.tag)) return;
+        if (findBlockParams(element.tag.split('.')[0], p))
+          return;
+        if (builtInComponents.includes(element.tag))
+          return;
         if (!imp) {
-          if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase()) return ;
+          if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase())
+            return;
           if (this.options.failOnMissingImport) {
             throw new Error('could not find import for element ' + element.tag + ' in ' + relativePath);
-          } else if (this.options.warn) {
-            console.log('warn', 'could not find import for element ' + element.tag + ' in ' + relativePath);
+          }
+          else {
+            generateErrorMessage(this.options, relativePath, 'could not find import for element ' + element.tag, element);
           }
           return;
         }
@@ -376,5 +386,21 @@ const importProcessors = {
   }
 };
 
-
-export default importProcessors;
+function generateErrorMessage(options, path, message, node) {
+  const msg: Msg = {
+    'rule': 'hbs-imports',
+    severity: 2,
+    filePath: path,
+    'line': node.loc.start.line,
+    'column': node.loc.start.column,
+    'endLine': node.loc.end.line,
+    'endColumn': node.loc.end.column,
+    'source': 'Show more icon',
+    'message': message
+  };
+  importProcessors.errors.push({ node, msg });
+  if (options.messageFormat === 'json' && options.warn) {
+    console.log(JSON.stringify(msg, null, 2));
+  }
+}
+exports.default = importProcessors;
