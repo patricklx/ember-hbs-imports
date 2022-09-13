@@ -350,7 +350,7 @@ const importProcessors = {
     const root = body;
     Object.entries(components).forEach((c) => {
       const letComponent = createComponentLetBlockExpr(c);
-      const i = imports.find(i => i.localName === c[0].replace('imported_', ''))!;
+      const i = imports.find(i => i.localName === c[0].replace('Imported_', ''))!;
       const node = i.node.params[2];
       (letComponent.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letComponent);
