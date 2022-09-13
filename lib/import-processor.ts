@@ -403,4 +403,4 @@ function generateErrorMessage(options, path, message, node) {
     console.log(JSON.stringify(msg, null, 2));
   }
 }
-exports.default = importProcessors;
+export default importProcessors;
