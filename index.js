@@ -80,30 +80,5 @@ module.exports = {
         return res;
       }
     });
-  },
-
-  patchEmberTemplateLint() {
-    const path = require("path");
-    const templateLint = require('ember-template-lint');
-    const verify = templateLint.default.constructor.verify;
-
-    let relativePath = '';
-    templateLint.default.constructor.verify = async function (options) {
-      relativePath = path.relative(process.cwd(), options.filePath);
-      return verify.call(this, options);
-    }
-
-
-    const glimmerPath = require.resolve('@glimmer/syntax', { paths: ["node_modules/ember-template-recast/node_modules", "node_modules"] });
-    const glimmer = require(path.join(glimmerPath.replace('index.js', ''), '/lib/parser/tokenizer-event-handlers'));
-    const preprocess = glimmer.preprocess;
-
-    const hbsImportsProcessor = require('ember-hbs-imports/lib/import-processor')
-    const hbsImportPreprocess = function(template) {
-      const ast = preprocess(template);
-      hbsImportsProcessor.default.replaceInAst(ast, relativePath);
-      return ast;
-    }
-    glimmer.preprocess = hbsImportPreprocess;
   }
 };
