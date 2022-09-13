@@ -2,6 +2,7 @@
 !addon/**/*.js
 !app/**/*.js
 !lib/**/*.js
+!glint/**/*.js
 !config/**/*.js
 !addon.js
 !index.js

@@ -95,5 +95,6 @@
     "before": [
       "ember-cli-htmlbars"
     ]
-  }
+  },
+  "glint-environment": "glint/glint-hbs-imports-env.js"
 }
