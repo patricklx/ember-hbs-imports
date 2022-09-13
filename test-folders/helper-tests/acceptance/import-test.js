@@ -7,16 +7,16 @@ module('Acceptance | helper', function(hooks) {
 
   test('helper works', async function(assert) {
     await visit('/');
-    assert.equal(find('.global').textContent, 'I\'m a globally referenced helper');
-    assert.equal(find('.local').textContent, 'I\'m a locally referenced helper');
+    assert.equal(find('.global')?.textContent, 'I\'m a globally referenced helper');
+    assert.equal(find('.local')?.textContent, 'I\'m a locally referenced helper');
 
-    assert.equal(findAll('.global').length, 1);
-    assert.equal(findAll('.local').length, 2);
+    assert.equal(findAll('.global')?.length, 1);
+    assert.equal(findAll('.local')?.length, 2);
 
-    assert.equal(find('.complex').textContent, 'abc');
+    assert.equal(find('.complex')?.textContent, 'abc');
 
     await new Promise(res => setTimeout(res, 1500));
 
-    assert.equal(find('.complex').textContent, 'abcd');
+    assert.equal(find('.complex')?.textContent, 'abcd');
   });
 });
