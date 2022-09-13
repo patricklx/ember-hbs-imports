@@ -1,12 +1,6 @@
 ember-hbs-imports
 ==============================================================================
 
-merged
-* ember-template-component-import
-* ember-template-style-import
-* ember-template-helper-import
-* ember-template-modifier-import
-
 This addon allows you to use import-style syntax to create local bindings to
 a helper/component and import styles within a template file.
 
@@ -66,6 +60,17 @@ All this addon does is taking that `{{import ...}}` statement
 and replacing all helper invocations with `{{ember-hbs-import/helpers/invoke-helper 'myHelper' ...}}`.
 
 Our helper then looks up the actual helper and calls `compute` with the other arguments
+
+
+Glint Support
+------------------------------------------------------------------------------
+* use `ember-hbs-imports` as glint environment
+* import `ember-hbs-imports/glint/globals` into your globals ts file
+
+Template Lint Support
+------------------------------------------------------------------------------
+* add plugin `"ember-hbs-imports/hbs-imports-rule"` to your `.template-lintrc.js`
+* enable or disable rule `'must-have-hbs-imports': true`
 
 Motivation
 ------------------------------------------------------------------------------
