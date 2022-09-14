@@ -83,7 +83,7 @@ const importProcessors = {
     messageFormat: 'json'
   },
   glimmer,
-  resolvePath(imp, name) {
+  resolvePath(imp: Import, name: string) {
     name = name.replace('_imported', '')
     if (name.includes('.') && !imp.importPath.endsWith(`.${this.options.styleExtension}`)) {
       name = name.split('.').slice(1).join('/');
@@ -160,9 +160,9 @@ const importProcessors = {
         ast.body.splice(index, 1);
       }
     });
-    const components: {[x:string]: string} = {};
-    const helpers: {[x:string]: {nodes: PathExpression[], resolvedPath: string}} = {};
-    const modifiers: {[x:string]: {nodes: PathExpression[], resolvedPath: string}} = {};
+    const components: {[x:string]: {path: string, imp: Import}} = {};
+    const helpers: {[x:string]: {nodes: PathExpression[], resolvedPath: string, imp: Import}} = {};
+    const modifiers: {[x:string]: {nodes: PathExpression[], resolvedPath: string, imp: Import}} = {};
     function findImport(name: string) {
       return imports.find((imp) => {
         if (imp.isStyle) {
@@ -231,7 +231,10 @@ const importProcessors = {
               node.parts[0] = node.original;
             }
             imported.components.add(resolvedPath);
-            components[node.original] = resolvedPath;
+            components[node.original] = {
+              path: resolvedPath,
+              imp: i
+            };
             i.used = true;
             return;
           }
@@ -248,7 +251,7 @@ const importProcessors = {
             node.parts[0] = node.original;
           }
           imported.others.add(resolvedPath + '.js');
-          helpers[node.original] = helpers[node.original] || { nodes: [], resolvedPath };
+          helpers[node.original] = helpers[node.original] || { nodes: [], resolvedPath, imp: i };
           helpers[node.original].nodes.push(node);
           i.used = true;
         }
@@ -279,7 +282,7 @@ const importProcessors = {
               p.parts[0] = p.original;
             }
           }
-          modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [] };
+          modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [], imp: i };
           modifiers[p.original].nodes.push(p);
           imported.others.add(resolvedPath + '.js');
           i.used = true;
@@ -312,13 +315,16 @@ const importProcessors = {
             element.tag = 'Imported_' + element.tag;
           }
           imported.components.add(resolvedPath);
-          components[element.tag] = resolvedPath;
+          components[element.tag] = {
+            path: resolvedPath,
+            imp: imp
+          };
         }
       }
     };
     glimmer.traverse(ast, visitor);
-    const createComponentLetBlockExpr = (comp: [string, string]) => {
-      return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1]}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+    const createComponentLetBlockExpr = (comp: [key: string, info: {path: string}]) => {
+      return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1].path}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
     };
     const handleHelper = (helper: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
@@ -355,7 +361,7 @@ const importProcessors = {
     }
     Object.entries(components).forEach((c) => {
       const letComponent = createComponentLetBlockExpr(c);
-      const i = imports.find(i => i.localName === c[0].replace('Imported_', ''))!;
+      const i = c[1].imp;
       const node = i.node.params[2];
       (letComponent.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letComponent);
@@ -365,7 +371,7 @@ const importProcessors = {
     Object.values(helpers).forEach((c) => {
       const letHelper = handleHelper(c);
       if (!letHelper) return;
-      const i = imports.find(i => i.localName === c.nodes[0].original.replace('imported_', '').replace(/_/, '-'))!;
+      const i = c.imp;
       const node = i.node.params[2];
       (letHelper.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letHelper);
@@ -375,7 +381,7 @@ const importProcessors = {
     Object.values(modifiers).forEach((c) => {
       const letModifier = handleModifier(c);
       if (!letModifier) return;
-      const i = imports.find(i => i.localName === c.nodes[0].original.replace('imported_', '').replace(/_/, '-'))!;
+      const i = c.imp;
       const node = i.node.params[2];
       (letModifier.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letModifier);
