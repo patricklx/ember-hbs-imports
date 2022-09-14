@@ -79,7 +79,7 @@ const importProcessors = {
     failOnMissingImport: false,
     useModifierHelperHelpers: false,
     useHelperWrapper: true,
-    useSafeImports: false,
+    useSafeImports: true,
     messageFormat: 'json'
   },
   glimmer,
