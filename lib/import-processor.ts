@@ -69,6 +69,7 @@ type Msg = {
 
 const importProcessors = {
   errors: [] as {node: Node, msg: Msg}[],
+  cacheOffset: {},
   options: {
     styleExtension: 'scss',
     root: '',
@@ -348,6 +349,10 @@ const importProcessors = {
 
     let body: glimmer.AST.TopLevelStatement[] = [];
     const root = body;
+    const baseLoc = {
+      start: ast.body[0].loc.start,
+      end: ast.body.slice(-1)[0].loc.end
+    }
     Object.entries(components).forEach((c) => {
       const letComponent = createComponentLetBlockExpr(c);
       const i = imports.find(i => i.localName === c[0].replace('Imported_', ''))!;
@@ -355,6 +360,7 @@ const importProcessors = {
       (letComponent.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letComponent);
       body = letComponent.program.body;
+      Object.assign(letComponent.loc, baseLoc);
     });
     Object.values(helpers).forEach((c) => {
       const letHelper = handleHelper(c);
@@ -364,6 +370,7 @@ const importProcessors = {
       (letHelper.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letHelper);
       body = letHelper.program.body;
+      Object.assign(letHelper.loc, baseLoc);
     });
     Object.values(modifiers).forEach((c) => {
       const letModifier = handleModifier(c);
@@ -373,6 +380,7 @@ const importProcessors = {
       (letModifier.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letModifier);
       body = letModifier.program.body;
+      Object.assign(letModifier.loc, baseLoc);
     });
     body.push(...ast.body);
     ast.body = root;
