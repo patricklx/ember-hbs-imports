@@ -1,8 +1,8 @@
 import * as glimmer from '@glimmer/syntax';
 import { hash } from 'spark-md5';
 import path from 'path';
-import { NodeVisitor, Path } from '@glimmer/syntax';
-import { Block, BlockStatement, ElementNode, PathExpression, SubExpression, Node } from '@glimmer/syntax/dist/types/lib/types/nodes';
+import { NodeVisitor, WalkerPath } from '@glimmer/syntax';
+import { BlockStatement, Block, ElementNode, SubExpression, PathExpression } from '@glimmer/syntax/dist/types/lib/v1/nodes-v1';
 
 function generateScopedName(name, fullPath, namespace) {
   fullPath = fullPath.replace(/\\/g, '/');
@@ -143,7 +143,7 @@ const importProcessors = {
     return imports;
   },
 
-  replaceInAst(ast: glimmer.AST.Template, relativePath: string) {
+  replaceInAst(ast: glimmer.ASTv1.Template, relativePath: string) {
     this.errors = [];
     const imported = {
       components: new Set<string>(),
@@ -176,7 +176,7 @@ const importProcessors = {
       });
     }
 
-    const findBlockParams = function(expression: string, p: Path<BlockStatement|ElementNode|Block|PathExpression>) {
+    const findBlockParams = function(expression: string, p: WalkerPath<BlockStatement|Block|ElementNode|PathExpression>) {
       if (p.node && p.node.type === 'BlockStatement' && p.node.program.blockParams.includes(expression)) {
         return true;
       }
@@ -253,7 +253,7 @@ const importProcessors = {
           i.used = true;
         }
       },
-      ElementNode: (element, p: Path<ElementNode>) => {
+      ElementNode: (element, p: WalkerPath<ElementNode>) => {
         element.modifiers.forEach((modifier) => {
           const p = modifier.path as any;
           const i = findImport(p.original);
@@ -347,7 +347,7 @@ const importProcessors = {
       }
     };
 
-    let body: glimmer.AST.TopLevelStatement[] = [];
+    let body: glimmer.AST.Statement[] = [];
     const root = body;
     const baseLoc = {
       start: ast.body[0].loc.start,
