@@ -1,8 +1,8 @@
 import * as glimmer from '@glimmer/syntax';
 import { hash } from 'spark-md5';
 import path from 'path';
-import { NodeVisitor, Path } from '@glimmer/syntax';
-import { Block, BlockStatement, ElementNode, PathExpression } from '@glimmer/syntax/dist/types/lib/types/nodes';
+import { NodeVisitor, WalkerPath } from '@glimmer/syntax';
+import { BlockStatement, Block, ElementNode, SubExpression, PathExpression } from '@glimmer/syntax/dist/types/lib/v1/nodes-v1';
 
 function generateScopedName(name, fullPath, namespace) {
   fullPath = fullPath.replace(/\\/g, '/');
@@ -14,7 +14,7 @@ function generateScopedName(name, fullPath, namespace) {
 type Import = {
   isStyle?: boolean;
   used?: boolean;
-  node: glimmer.AST.Node;
+  node: glimmer.AST.MustacheStatement;
   dynamic?: boolean;
   localName: string;
   importPath: string;
@@ -63,14 +63,24 @@ const builtInHelpers = [
   'yield',
 ];
 
+type Msg = {
+
+};
+
 const importProcessors = {
+  errors: [] as {node: Node, msg: Msg}[],
+  cacheOffset: {},
   options: {
     styleExtension: 'scss',
     root: '',
+    warn: true,
     namespace: '',
     failOnBadImport: false,
     failOnMissingImport: false,
-    useModifierHelperHelpers: false
+    useModifierHelperHelpers: false,
+    useHelperWrapper: true,
+    useSafeImports: false,
+    messageFormat: 'json'
   },
   glimmer,
   resolvePath(imp, name) {
@@ -97,6 +107,9 @@ const importProcessors = {
           importPath = importPath.replace(/^ui$/, this.options.namespace + '/ui');
         }
         if (importPath.startsWith('.')) {
+          relativePath = relativePath.replace(/^app\//, this.options.root + '/');
+          relativePath = relativePath.replace(/^addon\//, this.options.root + '/');
+          relativePath = relativePath.replace(/^src\//, this.options.root + '/');
           importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
         }
@@ -130,7 +143,8 @@ const importProcessors = {
     return imports;
   },
 
-  replaceInAst(ast: glimmer.AST.Template, relativePath: string) {
+  replaceInAst(ast: glimmer.ASTv1.Template, relativePath: string) {
+    this.errors = [];
     const imported = {
       components: new Set<string>(),
       helpers: new Set<string>(),
@@ -162,7 +176,7 @@ const importProcessors = {
       });
     }
 
-    const findBlockParams = function(expression: string, p: Path<BlockStatement|ElementNode|Block|PathExpression>) {
+    const findBlockParams = function(expression: string, p: WalkerPath<BlockStatement|Block|ElementNode|PathExpression>) {
       if (p.node && p.node.type === 'BlockStatement' && p.node.program.blockParams.includes(expression)) {
         return true;
       }
@@ -182,12 +196,19 @@ const importProcessors = {
         const i = findImport(node.original);
         if (!i && !builtInHelpers.includes(node.original)) {
           if (p.parentNode?.type === 'ElementModifierStatement') return;
+          if (!this.options.failOnBadImport) {
+            generateErrorMessage(this.options, relativePath, 'could not find import for ' + node.original, node);
+          }
+          else {
+            throw new Error(`modifier ${node.original} is not imported`);
+          }
         }
         if (i) {
           const resolvedPath = importProcessors.resolvePath(i, node.original);
           if (i.isStyle) {
             const name = node.original.split('.').slice(1).join('_');
             node.type = 'StringLiteral' as any;
+            node.loc = i.node.params[2].loc;
             delete (node as any).parts;
             node.original = generateScopedName(name, resolvedPath, this.options.namespace);
             (node as any).value = generateScopedName(name, resolvedPath, this.options.namespace);
@@ -199,10 +220,16 @@ const importProcessors = {
             node.original = node.original.replace(/\./g, '_sep_');
           }
           const firstLetter = node.original.replace('imported_', '').split('_sep_').slice(-1)[0][0];
-          if (!node.original.startsWith('imported_')) {
+          if (this.options.useSafeImports && !node.original.startsWith('imported_')) {
             node.original = 'imported_' + node.original;
           }
           if (firstLetter === firstLetter.toUpperCase()) {
+            if (this.options.useSafeImports) {
+              node.original = 'Imported_' + node.original;
+            }
+            if (node.parts) {
+              node.parts[0] = node.original;
+            }
             imported.components.add(resolvedPath);
             components[node.original] = resolvedPath;
             i.used = true;
@@ -213,20 +240,29 @@ const importProcessors = {
             return;
           }
           // its a helper
+          if (this.options.useSafeImports) {
+            node.original = 'imported_' + node.original;
+          }
+          node.original = node.original.replace(/-/g, '_');
+          if (node.parts) {
+            node.parts[0] = node.original;
+          }
           imported.others.add(resolvedPath + '.js');
           helpers[node.original] = helpers[node.original] || { nodes: [], resolvedPath };
           helpers[node.original].nodes.push(node);
           i.used = true;
         }
       },
-      ElementNode: (element, p: Path<ElementNode>) => {
+      ElementNode: (element, p: WalkerPath<ElementNode>) => {
         element.modifiers.forEach((modifier) => {
           const p = modifier.path as any;
           const i = findImport(p.original);
           if (!i) {
+            if (builtInHelpers.includes(p.original)) return;
             if (!this.options.failOnBadImport) {
-              console.warn('modifier', p.original, 'is not imported');
-            } else {
+              generateErrorMessage(this.options, relativePath, `modifier ${p.original} is not imported`, p);
+            }
+            else {
               throw new Error(`modifier ${p.original} is not imported`);
             }
             return;
@@ -236,8 +272,12 @@ const importProcessors = {
           if (p.original.includes('.')) {
             p.original = p.original.replace(/\./g, '_sep_');
           }
-          if (!p.original.startsWith('imported_')) {
+          p.original = p.original.replace(/-/g, '_');
+          if (this.options.useSafeImports && !p.original.startsWith('imported_')) {
             p.original = 'imported_' + p.original;
+            if (p.parts) {
+              p.parts[0] = p.original;
+            }
           }
           modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [] };
           modifiers[p.original].nodes.push(p);
@@ -248,24 +288,28 @@ const importProcessors = {
         if (element.tag.startsWith(':')) return ;
         if (element.tag.includes('::')) return ;
         const imp = findImport(element.tag.split('.')[0]);
-        if (findBlockParams(element.tag.split('.')[0], p)) return;
-        if (builtInComponents.includes(element.tag)) return;
+        if (findBlockParams(element.tag.split('.')[0], p))
+          return;
+        if (builtInComponents.includes(element.tag))
+          return;
         if (!imp) {
-          if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase()) return ;
+          if (element.tag.split('.').slice(-1)[0][0] !== element.tag.split('.').slice(-1)[0][0].toUpperCase())
+            return;
           if (this.options.failOnMissingImport) {
             throw new Error('could not find import for element ' + element.tag + ' in ' + relativePath);
-          } else {
-            console.log('warn', 'could not find import for element ' + element.tag + ' in ' + relativePath);
-            return;
           }
+          else {
+            generateErrorMessage(this.options, relativePath, 'could not find import for element ' + element.tag, element);
+          }
+          return;
         }
         if (imp) {
           const resolvedPath = importProcessors.resolvePath(imp, element.tag);
           if (element.tag.includes('.')) {
             element.tag = element.tag.replace(/\./g, '_sep_');
           }
-          if (!element.tag.startsWith('imported_')) {
-            element.tag = 'imported_' + element.tag;
+          if (this.options.useSafeImports && !element.tag.startsWith('Imported_')) {
+            element.tag = 'Imported_' + element.tag;
           }
           imported.components.add(resolvedPath);
           components[element.tag] = resolvedPath;
@@ -278,7 +322,10 @@ const importProcessors = {
     };
     const handleHelper = (helper: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
-        const lookup = `(ember-hbs-imports/helpers/lookup-helper this "${helper.resolvedPath}")`
+        let lookup =  `"${helper.resolvedPath}"`;
+        if (this.options.useHelperWrapper) {
+          lookup = `(ember-hbs-imports/helpers/lookup-helper this "${helper.resolvedPath}")`;
+        }
         return importProcessors.glimmer.preprocess(`{{#let (helper ${lookup}) as |${helper.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         helper.nodes.forEach(node => {
@@ -288,7 +335,10 @@ const importProcessors = {
     };
     const handleModifier = (modifier: { nodes: PathExpression[], resolvedPath: string }) => {
       if (this.options.useModifierHelperHelpers) {
-        const lookup = `(ember-hbs-imports/helpers/lookup-modifier this "${modifier.resolvedPath}")`
+        let lookup =  `"${modifier.resolvedPath}"`;
+        if (this.options.useHelperWrapper) {
+          lookup = `(ember-hbs-imports/helpers/lookup-modifier this "${modifier.resolvedPath}")`;
+        }
         return importProcessors.glimmer.preprocess(`{{#let (modifier ${lookup}) as |${modifier.nodes[0].original}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
       } else {
         modifier.nodes.forEach(node => {
@@ -297,24 +347,40 @@ const importProcessors = {
       }
     };
 
-    let body: glimmer.AST.TopLevelStatement[] = [];
+    let body: glimmer.AST.Statement[] = [];
     const root = body;
+    const baseLoc = {
+      start: ast.body[0].loc.start,
+      end: ast.body.slice(-1)[0].loc.end
+    }
     Object.entries(components).forEach((c) => {
       const letComponent = createComponentLetBlockExpr(c);
+      const i = imports.find(i => i.localName === c[0].replace('Imported_', ''))!;
+      const node = i.node.params[2];
+      (letComponent.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letComponent);
       body = letComponent.program.body;
+      Object.assign(letComponent.loc, baseLoc);
     });
     Object.values(helpers).forEach((c) => {
       const letHelper = handleHelper(c);
       if (!letHelper) return;
+      const i = imports.find(i => i.localName === c.nodes[0].original.replace('imported_', '').replace(/_/, '-'))!;
+      const node = i.node.params[2];
+      (letHelper.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letHelper);
       body = letHelper.program.body;
+      Object.assign(letHelper.loc, baseLoc);
     });
     Object.values(modifiers).forEach((c) => {
       const letModifier = handleModifier(c);
       if (!letModifier) return;
+      const i = imports.find(i => i.localName === c.nodes[0].original.replace('imported_', '').replace(/_/, '-'))!;
+      const node = i.node.params[2];
+      (letModifier.params[0] as SubExpression).params[0].loc = node.loc;
       body.push(letModifier);
       body = letModifier.program.body;
+      Object.assign(letModifier.loc, baseLoc);
     });
     body.push(...ast.body);
     ast.body = root;
@@ -328,5 +394,21 @@ const importProcessors = {
   }
 };
 
-
+function generateErrorMessage(options, path, message, node) {
+  const msg: Msg = {
+    'rule': 'hbs-imports',
+    severity: 2,
+    filePath: path,
+    'line': node.loc.start.line,
+    'column': node.loc.start.column,
+    'endLine': node.loc.end.line,
+    'endColumn': node.loc.end.column,
+    'source': 'Show more icon',
+    'message': message
+  };
+  importProcessors.errors.push({ node, msg });
+  if (options.messageFormat === 'json' && options.warn) {
+    console.log(JSON.stringify(msg, null, 2));
+  }
+}
 export default importProcessors;
