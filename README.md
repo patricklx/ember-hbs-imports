@@ -64,7 +64,7 @@ Our helper then looks up the actual helper and calls `compute` with the other ar
 
 Glint Support
 ------------------------------------------------------------------------------
-* use `ember-hbs-imports` as glint environment
+* use `ember-hbs-imports` as glint environment, remove ember-loose.
 * make sure that there is an import for every values or dont use imports at all
 
 Template Lint Support
