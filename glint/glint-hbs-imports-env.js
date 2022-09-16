@@ -3,8 +3,9 @@ const rewriteModule = Object.entries(require.cache).find(([k, v]) => k.includes(
 const fn = rewriteModule.rewriteModule;
 let relativePath = null;
 let currentTemplate = null;
+const cwd = process.cwd();
+
 function hbsImportsRewriteModule(ts, { script, template }, environment) {
-  const cwd = process.cwd();
   if (template?.filename) {
     relativePath = path.relative(cwd, template.filename);
   } else {
@@ -21,20 +22,43 @@ const glimmerTokenizer = require(path.join(glimmerPath.replace('index.js', ''), 
 const glimmer = require('@glimmer/syntax');
 const preprocess = glimmerTokenizer.preprocess;
 
+let transformArgs = null;
+const cache = {};
+
 const hbsImportsProcessor = require('ember-hbs-imports/lib/import-processor')
 hbsImportsProcessor.default.options.useModifierHelperHelpers = true;
 hbsImportsProcessor.default.options.useSafeImports = false;
 hbsImportsProcessor.default.options.useHelperWrapper = false;
 hbsImportsProcessor.default.options.warn = false;
 hbsImportsProcessor.default.options.root = require(path.join(process.cwd(), './package.json')).name;
+hbsImportsProcessor.default.options.noLets = true;
 const hbsImportPreprocess = function(template) {
   const ast = preprocess(template);
   try {
-    if (!relativePath) return ast;
+    if (!relativePath) {
+      console.error('hbsImportPreprocess delete');
+      delete transformArgs?.globals;
+      return ast;
+    }
     relativePath = relativePath.replace(/\\/g, '/');
-    hbsImportsProcessor.default.replaceInAst(ast, relativePath);
+    const imported = hbsImportsProcessor.default.replaceInAst(ast, relativePath);
+    cache[relativePath] = imported;
+    if ([Object.keys(imported.info.components), Object.keys(imported.info.modifiers), Object.keys(imported.info.helpers)].flat().length === 0) {
+      delete transformArgs?.globals;
+    }
+    console.error('hbsImportPreprocess keys length');
+    const meta = transformArgs.meta;
+    Object.entries(imported.info.components).forEach(([tag, i]) => {
+      meta.prepend += `const ${tag}: typeof import('${i.path}').default = {} as any;\n`;
+    });
+    Object.entries(imported.info.modifiers).forEach(([tag, i]) => {
+      meta.prepend += `const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`;
+    });
+    Object.entries(imported.info.helpers).forEach(([tag, i]) => {
+      meta.prepend += `const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`;
+    });
+    console.error('hbsImportPreprocess entries');
     // currentTemplate.content = glimmer.print(ast);
-    console.error(glimmer.print(ast))
   } catch (e) {
     console.error(e);
   }
@@ -56,3 +80,59 @@ glintTransform.default.prototype.getOriginalRange = function(...args) {
   return r;
 }
 
+
+const templateToTypescript = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\template-to-typescript'))?.[1].exports;
+const templateToTypescriptFn = templateToTypescript.templateToTypescript;
+const patchedTemplateToTypescript = function (template, args) {
+  args.meta = args.meta || {};
+  args.globals = [
+    'action',
+    'component',
+    'debugger',
+    'each',
+    'each-in',
+    'has-block',
+    'has-block-params',
+    'if',
+    'in-element',
+    'let',
+    'log',
+    'mount',
+    'mut',
+    'outlet',
+    'unbound',
+    'unless',
+    'with',
+    'yield',
+  ];
+  args.meta.prepend = args.meta.prepend  || '';
+  transformArgs = args;
+  return templateToTypescriptFn.call(this, template, args);
+}
+templateToTypescript.templateToTypescript = patchedTemplateToTypescript;
+
+
+const transformManager = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\core\\lib\\common\\transform-manager'))?.[1].exports;
+const rewriteDiagnostics = transformManager.default.prototype.rewriteDiagnostics;
+const util = require('@glint/core/lib/language-server/util');
+const patchedRewriteDiagnostics = function (diagnostics, fileName) {
+  const diags = rewriteDiagnostics.call(this, diagnostics, fileName);
+  diags.forEach((d) => {
+    const regex = /Cannot find module '(.*)' or its corresponding type declarations./;
+    const result = d.messageText.match?.(regex);
+    if (result && result.length > 1) {
+      const importPath = result[1];
+      const rel = path.relative(cwd, d.file.fileName).replace(/\\/g, '/');
+      const c = Object.values(cache[rel].info.components).find(x => x.path === importPath) ||
+        Object.values(cache[rel].info.helpers).find(x => x.resolvedPath === importPath) ||
+        Object.values(cache[rel].info.modifiers).find(x => x.resolvedPath === importPath);
+      if (c) {
+        d.start = util.positionToOffset(d.file.text, { line: c.imp.node.params[2].loc.start.line-1, character: c.imp.node.params[2].loc.start.column });
+        const end = util.positionToOffset(d.file.text, { line: c.imp.node.params[2].loc.end.line-1, character: c.imp.node.params[2].loc.end.column })
+        d.length = end - d.start;
+      }
+    }
+  })
+  return diags;
+}
+transformManager.default.prototype.rewriteDiagnostics = patchedRewriteDiagnostics;

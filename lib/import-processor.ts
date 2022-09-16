@@ -149,7 +149,12 @@ const importProcessors = {
       components: new Set<string>(),
       helpers: new Set<string>(),
       modifiers: new Set<string>(),
-      others: new Set<string>()
+      others: new Set<string>(),
+      info: {
+        components: {} as {[x:string]: {path: string, imp: Import}},
+        helpers: {} as {[x:string]: {nodes: PathExpression[], resolvedPath: string, imp: Import}},
+        modifiers: {} as {[x:string]: {nodes: PathExpression[], resolvedPath: string, imp: Import}}
+      }
     }
     const imports = this.parseImports(ast.body, relativePath);
     if (!imports.length) return imported;
@@ -160,9 +165,9 @@ const importProcessors = {
         ast.body.splice(index, 1);
       }
     });
-    const components: {[x:string]: {path: string, imp: Import}} = {};
-    const helpers: {[x:string]: {nodes: PathExpression[], resolvedPath: string, imp: Import}} = {};
-    const modifiers: {[x:string]: {nodes: PathExpression[], resolvedPath: string, imp: Import}} = {};
+    const components = imported.info.components;
+    const helpers = imported.info.helpers;
+    const modifiers = imported.info.modifiers;
     function findImport(name: string) {
       return imports.find((imp) => {
         if (imp.isStyle) {
