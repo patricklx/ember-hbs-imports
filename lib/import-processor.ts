@@ -75,6 +75,7 @@ const importProcessors = {
     root: '',
     warn: true,
     namespace: '',
+    emitLets: true,
     failOnBadImport: false,
     failOnMissingImport: false,
     useModifierHelperHelpers: false,
@@ -328,6 +329,11 @@ const importProcessors = {
       }
     };
     glimmer.traverse(ast, visitor);
+    
+    if (!this.options.emitLets) {
+      return imported;
+    }
+
     const createComponentLetBlockExpr = (comp: [key: string, info: {path: string}]) => {
       return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1].path}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
     };
