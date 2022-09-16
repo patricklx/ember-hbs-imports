@@ -104,6 +104,9 @@ const patchedTemplateToTypescript = function (template, args) {
   ];
   args.preamble = args.preamble  || [];
   transformArgs = args;
+  if (!template.match(/^{{import/)) {
+    delete args.globals;
+  }
   return templateToTypescriptFn.call(this, template, args);
 }
 templateToTypescript.templateToTypescript = patchedTemplateToTypescript;
