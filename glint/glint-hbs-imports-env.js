@@ -36,7 +36,6 @@ const hbsImportPreprocess = function(template) {
   const ast = preprocess(template);
   try {
     if (!relativePath) {
-      console.error('hbsImportPreprocess delete');
       delete transformArgs?.globals;
       return ast;
     }
@@ -46,7 +45,7 @@ const hbsImportPreprocess = function(template) {
     if ([Object.keys(imported.info.components), Object.keys(imported.info.modifiers), Object.keys(imported.info.helpers)].flat().length === 0) {
       delete transformArgs?.globals;
     }
-    console.error('hbsImportPreprocess keys length');
+
     const meta = transformArgs.meta;
     Object.entries(imported.info.components).forEach(([tag, i]) => {
       meta.prepend += `const ${tag}: typeof import('${i.path}').default = {} as any;\n`;
@@ -57,7 +56,6 @@ const hbsImportPreprocess = function(template) {
     Object.entries(imported.info.helpers).forEach(([tag, i]) => {
       meta.prepend += `const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`;
     });
-    console.error('hbsImportPreprocess entries');
     // currentTemplate.content = glimmer.print(ast);
   } catch (e) {
     console.error(e);
