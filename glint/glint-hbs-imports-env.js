@@ -45,16 +45,15 @@ const hbsImportPreprocess = function(template) {
     if ([Object.keys(imported.info.components), Object.keys(imported.info.modifiers), Object.keys(imported.info.helpers)].flat().length === 0) {
       delete transformArgs?.globals;
     }
-
-    const meta = transformArgs.meta;
+    const preamble = transformArgs.preamble;
     Object.entries(imported.info.components).forEach(([tag, i]) => {
-      meta.prepend += `const ${tag}: typeof import('${i.path}').default = {} as any;\n`;
+      preamble.push(`const ${tag}: typeof import('${i.path}').default = {} as any;`);
     });
     Object.entries(imported.info.modifiers).forEach(([tag, i]) => {
-      meta.prepend += `const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`;
+      preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
     });
     Object.entries(imported.info.helpers).forEach(([tag, i]) => {
-      meta.prepend += `const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`;
+      preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
     });
     // currentTemplate.content = glimmer.print(ast);
   } catch (e) {
@@ -103,7 +102,7 @@ const patchedTemplateToTypescript = function (template, args) {
     'with',
     'yield',
   ];
-  args.meta.prepend = args.meta.prepend  || '';
+  args.preamble = args.preamble  || [];
   transformArgs = args;
   return templateToTypescriptFn.call(this, template, args);
 }
