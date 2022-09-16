@@ -31,7 +31,7 @@ hbsImportsProcessor.default.options.useSafeImports = false;
 hbsImportsProcessor.default.options.useHelperWrapper = false;
 hbsImportsProcessor.default.options.warn = false;
 hbsImportsProcessor.default.options.root = require(path.join(process.cwd(), './package.json')).name;
-hbsImportsProcessor.default.options.noLets = true;
+hbsImportsProcessor.default.options.emitLets = false;
 const hbsImportPreprocess = function(template) {
   const ast = preprocess(template);
   try {
