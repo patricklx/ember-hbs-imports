@@ -70,6 +70,7 @@ type Msg = {
 const importProcessors = {
   errors: [] as {node: Node, msg: Msg}[],
   cacheOffset: {},
+  options: {} as any,
   defaultOptions: {
     styleExtension: 'scss',
     root: '',
