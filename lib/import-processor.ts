@@ -70,7 +70,7 @@ type Msg = {
 const importProcessors = {
   errors: [] as {node: Node, msg: Msg}[],
   cacheOffset: {},
-  options: {
+  defaultOptions: {
     styleExtension: 'scss',
     root: '',
     warn: true,
@@ -146,6 +146,7 @@ const importProcessors = {
 
   replaceInAst(ast: glimmer.ASTv1.Template, relativePath: string) {
     this.errors = [];
+    this.options = Object.assign({}, this.defaultOptions, this.options);
     const imported = {
       components: new Set<string>(),
       helpers: new Set<string>(),
