@@ -9,7 +9,7 @@ export default class ComplexHelper extends Helper {
       later(() => {
         this.text += 'd';
         this.recompute();
-      }, 100);
+      }, 1000);
     }
     return this.text;
   }
