@@ -19,6 +19,7 @@ type Import = {
   localName: string;
   importPath: string;
   isLocalNameValid: boolean;
+  shouldLookInFile: boolean;
 };
 
 const builtInComponents = ['LinkTo'];
@@ -116,6 +117,7 @@ const importProcessors = {
           importPath = importPath.replace('node_modules/', '');
         }
         const hasMultiple = localName.includes(',') || localName.includes(' as ');
+        const shouldLookInFile = localName.includes('{') && localName.includes('}');
         const localNames = localName.replace(/['"]/g, '').split(',');
         localNames.forEach((lName) => {
           lName = lName.trim();
@@ -128,7 +130,12 @@ const importProcessors = {
           if (importName === '*') {
             const name = `${lName}\\.([^\\s\\)} |]+)`;
             imports.push({
-              node, dynamic: true, localName: name, importPath: importPath, isLocalNameValid: true
+              node,
+              dynamic: true,
+              localName: name,
+              importPath: importPath,
+              isLocalNameValid: true,
+              shouldLookInFile
             });
             return;
           }
@@ -137,7 +144,8 @@ const importProcessors = {
             node,
             localName: lName,
             importPath: importPath + (hasMultiple ? (`/${importName}`) : ''),
-            isLocalNameValid: true
+            isLocalNameValid: true,
+            shouldLookInFile
           });
         });
       }
