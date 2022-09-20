@@ -6,10 +6,12 @@ export default class ComplexHelper extends Helper {
   text = 'abc';
   compute(params, hash) {
     if (this.text === 'abc') {
-      later(() => {
-        this.text += 'd';
-        this.recompute();
-      }, 1000);
+      setTimeout(() => {
+        later(() => {
+          this.text += 'd';
+          this.recompute();
+        }, 5);
+      }, 1000)
     }
     return this.text;
   }
