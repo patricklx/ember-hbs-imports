@@ -134,7 +134,7 @@ const patchedRewriteDiagnostics = function (diagnostics, fileName) {
   diags.forEach((d) => {
     const regexs = [
       /Cannot find module '(.*)' or its corresponding type declarations./,
-      /Namespace '(.*)' has no exported member/
+      /Namespace '"(.*)"' has no exported member/
     ];
     const result = regexs.map(r => d.messageText.match?.(r)).find(r => r && r.length > 1)
     if (result && result.length > 1) {
