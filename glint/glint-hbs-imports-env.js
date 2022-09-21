@@ -29,6 +29,7 @@ const hbsImportsProcessor = require('ember-hbs-imports/lib/import-processor')
 hbsImportsProcessor.default.options.useModifierHelperHelpers = true;
 hbsImportsProcessor.default.options.useSafeImports = false;
 hbsImportsProcessor.default.options.useHelperWrapper = false;
+hbsImportsProcessor.default.options.extendImportPathForNamedImports = false;
 hbsImportsProcessor.default.options.warn = false;
 hbsImportsProcessor.default.options.root = require(path.join(process.cwd(), './package.json')).name;
 hbsImportsProcessor.default.options.emitLets = false;
@@ -48,24 +49,21 @@ const hbsImportPreprocess = function(template) {
     const preamble = transformArgs.preamble;
     Object.entries(imported.info.components).forEach(([tag, i]) => {
       if (i.imp.shouldLookInFile) {
-        const path = i.path.split('/').slice(0, -1).join('/');
-        preamble.push(`const ${tag}: typeof import('${path}').${tag} = {} as any;`);
+        preamble.push(`const ${tag}: typeof import('${i.path}').${tag} = {} as any;`);
       } else {
         preamble.push(`const ${tag}: typeof import('${i.path}').default = {} as any;`);
       }
     });
     Object.entries(imported.info.modifiers).forEach(([tag, i]) => {
       if (i.imp.shouldLookInFile) {
-        const path = i.resolvedPath.split('/').slice(0, -1).join('/');
-        preamble.push(`const ${tag}: typeof import('${path}').${tag} = {} as any;\n`);
+        preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;\n`);
       } else {
         preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
       }
     });
     Object.entries(imported.info.helpers).forEach(([tag, i]) => {
       if (i.imp.shouldLookInFile) {
-        const path = i.resolvedPath.split('/').slice(0, -1).join('/');
-        preamble.push(`const ${tag}: typeof import('${path}').${tag} = {} as any;\n`);
+        preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;\n`);
       } else {
         preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
       }
@@ -131,6 +129,7 @@ const transformManager = Object.entries(require.cache).find(([k, v]) => k.includ
 const rewriteDiagnostics = transformManager.default.prototype.rewriteDiagnostics;
 const util = require('@glint/core/lib/language-server/util');
 const patchedRewriteDiagnostics = function (diagnostics, fileName) {
+  console.error('patchedRewriteDiagnostics');
   const diags = rewriteDiagnostics.call(this, diagnostics, fileName);
   diags.forEach((d) => {
     const regex = /Cannot find module '(.*)' or its corresponding type declarations./;
@@ -138,9 +137,9 @@ const patchedRewriteDiagnostics = function (diagnostics, fileName) {
     if (result && result.length > 1) {
       const importPath = result[1];
       const rel = path.relative(cwd, d.file.fileName).replace(/\\/g, '/');
-      const c = Object.values(cache[rel].info.components).find(x => x.path === importPath) ||
-        Object.values(cache[rel].info.helpers).find(x => x.resolvedPath === importPath) ||
-        Object.values(cache[rel].info.modifiers).find(x => x.resolvedPath === importPath);
+      const c = Object.values(cache[rel].info.components).find(x => x.imp.importPath === importPath) ||
+        Object.values(cache[rel].info.helpers).find(x => x.imp.importPath === importPath) ||
+        Object.values(cache[rel].info.modifiers).find(x => x.imp.importPath === importPath);
       if (c) {
         d.start = util.positionToOffset(d.file.text, { line: c.imp.node.params[2].loc.start.line-1, character: c.imp.node.params[2].loc.start.column });
         const end = util.positionToOffset(d.file.text, { line: c.imp.node.params[2].loc.end.line-1, character: c.imp.node.params[2].loc.end.column })

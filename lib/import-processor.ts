@@ -83,6 +83,7 @@ const importProcessors = {
     useModifierHelperHelpers: false,
     useHelperWrapper: true,
     useSafeImports: true,
+    extendImportPathForNamedImports: true,
     messageFormat: 'json'
   },
   glimmer,
@@ -143,7 +144,7 @@ const importProcessors = {
             isStyle: importPath.endsWith('.scss'),
             node,
             localName: lName,
-            importPath: importPath + (hasMultiple ? (`/${importName}`) : ''),
+            importPath: importPath + ((hasMultiple && !shouldLookInFile && this.options.extendImportPathForNamedImports) ? (`/${importName}`) : ''),
             isLocalNameValid: true,
             shouldLookInFile
           });
