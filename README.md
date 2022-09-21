@@ -25,11 +25,14 @@ Usage
 Use the same kind of import syntax you are familiar with from Javascript:
 
 Syntax:
+* import "{ named }" from "my-helpers"
+* import "{ * as named }" from "my-helpers"
 * import a from 'x': will use helper/component from 'x'
 * import * as b from 'x': will user helper/component from path 'x/<b.*>'
 * import style from 'x.scoped.scss': import scss and replace content in template 
 
 ```hbs
+{{import "{ fn }" from "@ember/helper"}}
 {{import myHelper from 'ui/helper'}}
 {{import my-mod from 'ui/modifiers'}}
 {{import style from './styles.scoped.scss'}}
