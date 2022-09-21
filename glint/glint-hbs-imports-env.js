@@ -48,21 +48,24 @@ const hbsImportPreprocess = function(template) {
     const preamble = transformArgs.preamble;
     Object.entries(imported.info.components).forEach(([tag, i]) => {
       if (i.imp.shouldLookInFile) {
-        preamble.push(`const ${tag}: typeof import('${i.path}').${tag} = {} as any;`);
+        const path = i.path.split('/').slice(0, -1).join('/');
+        preamble.push(`const ${tag}: typeof import('${path}').${tag} = {} as any;`);
       } else {
         preamble.push(`const ${tag}: typeof import('${i.path}').default = {} as any;`);
       }
     });
     Object.entries(imported.info.modifiers).forEach(([tag, i]) => {
       if (i.imp.shouldLookInFile) {
-        preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;\n`);
+        const path = i.resolvedPath.split('/').slice(0, -1).join('/');
+        preamble.push(`const ${tag}: typeof import('${path}').${tag} = {} as any;\n`);
       } else {
         preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
       }
     });
     Object.entries(imported.info.helpers).forEach(([tag, i]) => {
       if (i.imp.shouldLookInFile) {
-        preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;\n`);
+        const path = i.resolvedPath.split('/').slice(0, -1).join('/');
+        preamble.push(`const ${tag}: typeof import('${path}').${tag} = {} as any;\n`);
       } else {
         preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
       }

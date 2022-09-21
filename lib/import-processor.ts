@@ -116,9 +116,9 @@ const importProcessors = {
           importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
         }
-        const hasMultiple = localName.includes(',') || localName.includes(' as ');
         const shouldLookInFile = localName.includes('{') && localName.includes('}');
-        const localNames = localName.replace(/['"]/g, '').split(',');
+        const hasMultiple = localName.includes(',') || localName.includes(' as ') || shouldLookInFile;
+        const localNames = localName.replace(/['"{}]/g, '').split(',');
         localNames.forEach((lName) => {
           lName = lName.trim();
           let importName = lName;
@@ -339,7 +339,7 @@ const importProcessors = {
       }
     };
     glimmer.traverse(ast, visitor);
-    
+
     if (!this.options.emitLets) {
       return imported;
     }
