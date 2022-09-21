@@ -132,8 +132,11 @@ const patchedRewriteDiagnostics = function (diagnostics, fileName) {
   console.error('patchedRewriteDiagnostics');
   const diags = rewriteDiagnostics.call(this, diagnostics, fileName);
   diags.forEach((d) => {
-    const regex = /Cannot find module '(.*)' or its corresponding type declarations./;
-    const result = d.messageText.match?.(regex);
+    const regexs = [
+      /Cannot find module '(.*)' or its corresponding type declarations./,
+      /Namespace '(.*)' has no exported member/
+    ];
+    const result = regexs.map(r => d.messageText.match?.(r)).find(r => r && result.length > 1)
     if (result && result.length > 1) {
       const importPath = result[1];
       const rel = path.relative(cwd, d.file.fileName).replace(/\\/g, '/');
