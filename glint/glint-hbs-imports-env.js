@@ -5,6 +5,8 @@ let relativePath = null;
 let currentTemplate = null;
 const cwd = process.cwd();
 
+const util = require('@glint/core/lib/language-server/util');
+
 function hbsImportsRewriteModule(ts, { script, template }, environment) {
   if (template?.filename) {
     relativePath = path.relative(cwd, template.filename);
@@ -46,6 +48,19 @@ const hbsImportPreprocess = function(template) {
     if ([Object.keys(imported.info.components), Object.keys(imported.info.modifiers), Object.keys(imported.info.helpers)].flat().length === 0) {
       delete transformArgs?.globals;
     }
+
+    const all = [
+      ...Object.values(imported.info.components),
+      ...Object.values(imported.info.helpers),
+      ...Object.values(imported.info.modifiers)
+    ];
+
+    all.forEach((c) => {
+      const node = c.imp.node;
+      node.params[2].loc.start.offset = util.positionToOffset(template, { line: node.params[2].loc.start.line-1, character: node.params[2].loc.start.column });
+      node.params[2].loc.end.offset = util.positionToOffset(template, { line: node.params[2].loc.end.line-1, character: node.params[2].loc.end.column });
+    })
+
     const preamble = transformArgs.preamble;
     Object.entries(imported.info.components).forEach(([tag, i]) => {
       if (i.imp.shouldLookInFile) {
@@ -127,7 +142,6 @@ templateToTypescript.templateToTypescript = patchedTemplateToTypescript;
 
 const transformManager = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\core\\lib\\common\\transform-manager'))?.[1].exports;
 const rewriteDiagnostics = transformManager.default.prototype.rewriteDiagnostics;
-const util = require('@glint/core/lib/language-server/util');
 const patchedRewriteDiagnostics = function (diagnostics, fileName) {
   console.error('patchedRewriteDiagnostics');
   const diags = rewriteDiagnostics.call(this, diagnostics, fileName);
@@ -144,8 +158,8 @@ const patchedRewriteDiagnostics = function (diagnostics, fileName) {
         Object.values(cache[rel].info.helpers).find(x => x.imp.importPath === importPath) ||
         Object.values(cache[rel].info.modifiers).find(x => x.imp.importPath === importPath);
       if (c) {
-        d.start = util.positionToOffset(d.file.text, { line: c.imp.node.params[2].loc.start.line-1, character: c.imp.node.params[2].loc.start.column });
-        const end = util.positionToOffset(d.file.text, { line: c.imp.node.params[2].loc.end.line-1, character: c.imp.node.params[2].loc.end.column })
+        d.start = c.imp.node.params[2].loc.start.offset;
+        const end = c.imp.node.params[2].loc.end.offset;
         d.length = end - d.start;
       }
     }
@@ -153,3 +167,30 @@ const patchedRewriteDiagnostics = function (diagnostics, fileName) {
   return diags;
 }
 transformManager.default.prototype.rewriteDiagnostics = patchedRewriteDiagnostics;
+
+const getTransformedOffset = transformManager.default.prototype.getTransformedOffset;
+const patchedGetTransformedOffset = function (originalFileName, originalOffset) {
+  const res = getTransformedOffset.call(this, originalFileName, originalOffset);
+  const rel = path.relative(cwd, originalFileName).replace(/\\/g, '/');
+  const contents = this.readTransformedFile(originalFileName);
+  const transformedContents = this.readTransformedFile(res.transformedFileName);
+
+  const all = [
+    ...Object.values(cache[rel].info.components),
+    ...Object.values(cache[rel].info.helpers),
+    ...Object.values(cache[rel].info.modifiers)
+  ];
+  console.error('patchedGetTransformedOffset', originalOffset, all.map(x => [x.imp.node.params[2].loc.start.offset, x.imp.node.params[2].loc.end.offset]));
+  const c = all.find(x => x.imp.node.params[2].loc.start.offset <= originalOffset && x.imp.node.params[2].loc.end.offset >= originalOffset);
+  if (c) {
+    console.error('patchedGetTransformedOffset', res, transformedContents);
+    const offsetInImportPath = originalOffset - c.imp.node.params[2].loc.start.offset;
+    const importPath = c.imp.importPath;
+    const importSpecifier = `typeof import('${importPath}')`;
+    const startOffset = 'typeof import(\''.length;
+    res.transformedOffset = transformedContents.indexOf(importSpecifier) + startOffset + offsetInImportPath;
+  }
+  return res;
+}
+
+transformManager.default.prototype.getTransformedOffset = patchedGetTransformedOffset;

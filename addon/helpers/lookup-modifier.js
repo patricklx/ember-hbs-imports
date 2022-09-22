@@ -3,7 +3,11 @@ import Helper from '@ember/component/helper';
 
 export default Helper.extend({
   compute([context, path]) {
-    return getOwner(context||this).factoryFor(`modifier:${path}`)?.class;
+    const m = getOwner(context||this).factoryFor(`modifier:${path}`)?.class;
+    if (!m) {
+      throw new Error('could not find modifier: ' + path);
+    }
+    return m;
   }
 });
 
