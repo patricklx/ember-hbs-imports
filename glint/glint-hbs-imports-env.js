@@ -143,7 +143,6 @@ templateToTypescript.templateToTypescript = patchedTemplateToTypescript;
 const transformManager = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\core\\lib\\common\\transform-manager'))?.[1].exports;
 const rewriteDiagnostics = transformManager.default.prototype.rewriteDiagnostics;
 const patchedRewriteDiagnostics = function (diagnostics, fileName) {
-  console.error('patchedRewriteDiagnostics');
   const diags = rewriteDiagnostics.call(this, diagnostics, fileName);
   diags.forEach((d) => {
     const regexs = [
@@ -180,10 +179,8 @@ const patchedGetTransformedOffset = function (originalFileName, originalOffset) 
     ...Object.values(cache[rel].info.helpers),
     ...Object.values(cache[rel].info.modifiers)
   ];
-  console.error('patchedGetTransformedOffset', originalOffset, all.map(x => [x.imp.node.params[2].loc.start.offset, x.imp.node.params[2].loc.end.offset]));
   const c = all.find(x => x.imp.node.params[2].loc.start.offset <= originalOffset && x.imp.node.params[2].loc.end.offset >= originalOffset);
   if (c) {
-    console.error('patchedGetTransformedOffset', res, transformedContents);
     const offsetInImportPath = originalOffset - c.imp.node.params[2].loc.start.offset;
     const importPath = c.imp.importPath;
     const importSpecifier = `typeof import('${importPath}')`;
