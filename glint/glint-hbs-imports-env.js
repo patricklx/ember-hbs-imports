@@ -171,7 +171,11 @@ const getTransformedOffset = transformManager.default.prototype.getTransformedOf
 const patchedGetTransformedOffset = function (originalFileName, originalOffset) {
   const res = getTransformedOffset.call(this, originalFileName, originalOffset);
   const rel = path.relative(cwd, originalFileName).replace(/\\/g, '/');
-  const contents = this.readTransformedFile(originalFileName);
+
+  if (!cache[rel]) {
+    return res;
+  }
+
   const transformedContents = this.readTransformedFile(res.transformedFileName);
 
   const all = [
