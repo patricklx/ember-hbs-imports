@@ -2,6 +2,8 @@ const path = require('path');
 const rewriteModule = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\rewrite-module'))?.[1].exports;
 
 if (!rewriteModule) {
+  const looseEnv = require('@glint/environment-ember-loose/-private/environment/index');
+  module.exports = looseEnv;
   return
 }
 
