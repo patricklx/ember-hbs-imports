@@ -1,5 +1,10 @@
 const path = require('path');
 const rewriteModule = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\rewrite-module'))?.[1].exports;
+
+if (!rewriteModule) {
+  return
+}
+
 const fn = rewriteModule.rewriteModule;
 let relativePath = null;
 let currentTemplate = null;
