@@ -84,6 +84,9 @@ const hbsImportPreprocess = function(template) {
       }
     });
     Object.entries(imported.info.helpers).forEach(([tag, i]) => {
+      if (tag === 'array' && i.resolvedPath === '@ember/helper') {
+        return;
+      }
       if (i.imp.shouldLookInFile) {
         preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;\n`);
       } else {
