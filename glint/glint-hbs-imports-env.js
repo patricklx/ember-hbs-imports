@@ -120,26 +120,30 @@ const templateToTypescript = Object.entries(require.cache).find(([k, v]) => k.in
 const templateToTypescriptFn = templateToTypescript.templateToTypescript;
 const patchedTemplateToTypescript = function (template, args) {
   args.meta = args.meta || {};
-  args.globals = [
-    'action',
-    'component',
-    'debugger',
-    'each',
-    'each-in',
-    'has-block',
-    'has-block-params',
-    'if',
-    'in-element',
-    'let',
-    'log',
-    'mount',
-    'mut',
-    'outlet',
-    'unbound',
-    'unless',
-    'with',
-    'yield',
-  ];
+  args.globals = {
+    includes: (v) => {
+      return v.includes('::') || [
+        'action',
+        'component',
+        'debugger',
+        'each',
+        'each-in',
+        'has-block',
+        'has-block-params',
+        'if',
+        'in-element',
+        'let',
+        'log',
+        'mount',
+        'mut',
+        'outlet',
+        'unbound',
+        'unless',
+        'with',
+        'yield'
+      ].includes(v)
+    }
+  };
   args.preamble = args.preamble  || [];
   transformArgs = args;
   if (!template.match(/^{{import/)) {
