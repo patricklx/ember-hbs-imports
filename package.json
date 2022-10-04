@@ -1,6 +1,6 @@
 {
   "name": "ember-hbs-imports",
-  "version": "0.5.20",
+  "version": "0.5.21",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricklx/ember-hbs-imports"
@@ -36,7 +36,7 @@
     "broccoli-persistent-filter": "^2.1.1",
     "ember-cli-babel": "^7.23.0",
     "ember-cli-version-checker": "^5.1.2",
-    "ember-simple-mu-resolver": "^0.1.8",
+    "ember-simple-mu-resolver": "^0.1.9",
     "md5-hex": "^2.0.0",
     "postcss": "^8.1.6",
     "postcss-scss": "^3.0.4",
