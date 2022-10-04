@@ -88,7 +88,7 @@ const importProcessors = {
   },
   glimmer,
   resolvePath(imp: Import, name: string) {
-    name = name.replace('_imported', '')
+    name = name.replace('imported_', '')
     if (name.includes('.') && !imp.importPath.endsWith(`.${this.options.styleExtension}`)) {
       name = name.split('.').slice(1).join('/');
       return `${imp.importPath}/${name}`;
@@ -144,7 +144,7 @@ const importProcessors = {
             isStyle: importPath.endsWith('.scss'),
             node,
             localName: lName,
-            importPath: importPath + ((hasMultiple && !shouldLookInFile && this.options.extendImportPathForNamedImports) ? (`/${importName}`) : ''),
+            importPath: importPath + (((hasMultiple || shouldLookInFile) && this.options.extendImportPathForNamedImports) ? (`/${importName}`) : ''),
             isLocalNameValid: true,
             shouldLookInFile
           });
@@ -241,7 +241,7 @@ const importProcessors = {
             node.original = 'imported_' + node.original;
           }
           if (firstLetter === firstLetter.toUpperCase()) {
-            if (this.options.useSafeImports) {
+            if (this.options.useSafeImports && !node.original.startsWith('imported_')) {
               node.original = 'Imported_' + node.original;
             }
             if (node.parts) {
@@ -260,7 +260,7 @@ const importProcessors = {
             return;
           }
           // its a helper
-          if (this.options.useSafeImports) {
+          if (this.options.useSafeImports && !node.original.startsWith('imported_')) {
             node.original = 'imported_' + node.original;
           }
           node.original = node.original.replace(/-/g, '_');

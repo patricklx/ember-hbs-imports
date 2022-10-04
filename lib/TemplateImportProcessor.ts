@@ -36,14 +36,30 @@ export default class TemplateImportProcessor extends BroccoliFilter {
   processString(contents, relativePath) {
     importProcessor.options = Object.assign({}, this.options);
     const [res, imports] = importProcessor.processAst(contents, relativePath);
-    this.options.imports.from[relativePath] = [];
-    imports.components.forEach((comp) => {
-      this.options.imports.components.add(comp);
-      this.options.imports.from[relativePath].push(comp);
+    this.options.imports.from[relativePath] = new Set();
+    Object.values(imports.info.components).forEach((comp) => {
+      let path = comp.path;
+      if (comp.imp.shouldLookInFile) {
+        path = comp.imp.importPath.split('/').slice(0, -1).join('/')
+      }
+      this.options.imports.components.add(path);
+      this.options.imports.from[relativePath].add(path);
     });
-    imports.others.forEach((comp) => {
-      this.options.imports.others.add(comp);
-      this.options.imports.from[relativePath].push(comp);
+    Object.values(imports.info.helpers).forEach((comp) => {
+      let path = comp.resolvedPath;
+      if (comp.imp.shouldLookInFile) {
+        path = comp.imp.importPath.split('/').slice(0, -1).join('/')
+      }
+      this.options.imports.components.add(path);
+      this.options.imports.from[relativePath].add(path);
+    });
+    Object.values(imports.info.modifiers).forEach((comp) => {
+      let path = comp.resolvedPath;
+      if (comp.imp.shouldLookInFile) {
+        path = comp.imp.importPath.split('/').slice(0, -1).join('/')
+      }
+      this.options.imports.components.add(path);
+      this.options.imports.from[relativePath].add(path);
     });
     return res;
   }
