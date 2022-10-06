@@ -144,7 +144,9 @@ const patchedTemplateToTypescript = function (template, args) {
         'unbound',
         'unless',
         'with',
-        'yield'
+        'yield',
+        'modifier',
+        'helper'
       ].includes(v)
     }
   };
