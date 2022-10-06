@@ -50,6 +50,10 @@ const hbsImportPreprocess = function(template) {
       return ast;
     }
     relativePath = relativePath.replace(/\\/g, '/');
+    hbsImportsProcessor.default.options.namespace = path.basename(cwd);
+    if (relativePath.startsWith('tests/dummy/')) {
+      hbsImportsProcessor.default.options.namespace = 'dummy';
+    }
     const imported = hbsImportsProcessor.default.replaceInAst(ast, relativePath);
     cache[relativePath] = imported;
     if ([Object.keys(imported.info.components), Object.keys(imported.info.modifiers), Object.keys(imported.info.helpers)].flat().length === 0) {
