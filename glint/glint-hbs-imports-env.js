@@ -1,5 +1,11 @@
 const path = require('path');
-const rewriteModule = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\rewrite-module'))?.[1].exports;
+
+function findModule(path) {
+  return Object.entries(require.cache).find(([k, v]) => k.includes(path))?.[1].exports ||
+    Object.entries(require.cache).find(([k, v]) => k.includes(path.replace(/\//g, '\\')))?.[1].exports;
+}
+
+const rewriteModule = findModule('@glint/transform/lib/template/rewrite-module')
 
 if (!rewriteModule) {
   const looseEnv = require('@glint/environment-ember-loose/-private/environment/index');
@@ -111,7 +117,7 @@ const looseEnv = require('@glint/environment-ember-loose/-private/environment/in
 module.exports = looseEnv;
 
 
-const glintTransform =  Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\transformed-module'))?.[1].exports;
+const glintTransform = findModule('@glint/transform/lib/template/transformed-module');
 const getOriginalRange = glintTransform.default.prototype.getOriginalRange;
 glintTransform.default.prototype.getOriginalRange = function(...args) {
   const r = getOriginalRange.call(this, ...args);
@@ -120,7 +126,7 @@ glintTransform.default.prototype.getOriginalRange = function(...args) {
 }
 
 
-const templateToTypescript = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\template-to-typescript'))?.[1].exports;
+const templateToTypescript = findModule('@glint/transform/lib/template/template-to-typescript');
 const templateToTypescriptFn = templateToTypescript.templateToTypescript;
 const patchedTemplateToTypescript = function (template, args) {
   args.meta = args.meta || {};
@@ -160,7 +166,7 @@ const patchedTemplateToTypescript = function (template, args) {
 templateToTypescript.templateToTypescript = patchedTemplateToTypescript;
 
 
-const transformManager = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\core\\lib\\common\\transform-manager'))?.[1].exports;
+const transformManager = findModule('@glint/core/lib/common/transform-manager');
 const rewriteDiagnostics = transformManager.default.prototype.rewriteDiagnostics;
 const patchedRewriteDiagnostics = function (diagnostics, fileName) {
   const diags = rewriteDiagnostics.call(this, diagnostics, fileName);
