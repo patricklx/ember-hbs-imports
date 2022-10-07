@@ -173,6 +173,7 @@ const patchedRewriteDiagnostics = function (diagnostics, fileName) {
     if (result && result.length > 1) {
       const importPath = result[1];
       const rel = path.relative(cwd, d.file.fileName).replace(/\\/g, '/');
+      if (!cache[rel]) return diags;
       const c = Object.values(cache[rel].info.components).find(x => x.imp.importPath === importPath) ||
         Object.values(cache[rel].info.helpers).find(x => x.imp.importPath === importPath) ||
         Object.values(cache[rel].info.modifiers).find(x => x.imp.importPath === importPath);
