@@ -6,3 +6,4 @@
 !config/**/*.js
 !addon.js
 !index.js
+!hbs-imports-rule.mjs
