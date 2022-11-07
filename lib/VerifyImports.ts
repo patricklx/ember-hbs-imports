@@ -27,7 +27,8 @@ class VerifyImports extends BroccoliFilter {
     const r = await super.build(...args);
     const imports = this.imports;
     Object.entries(imports.from).forEach(([from, imps]) => {
-      const notFound = [...imps.values()].filter((i) => !this.files.has(i) && !this.files.has(i + '.js') && !this.files.has(i+'/index') && !this.files.has(i+'/index.js'));
+      const files = [...imps.values()].filter((f) => f !== '@ember/helper' && f !== '@ember/modifier');
+      const notFound = files.filter((i) => !this.files.has(i) && !this.files.has(i + '.js') && !this.files.has(i+'/index') && !this.files.has(i+'/index.js'));
       if (notFound.length) {
         if (this.options.failOnMissingImport) {
           throw new Error(from + ':imports not found -> ' + notFound)
