@@ -51,8 +51,10 @@ hbsImportsProcessor.default.options.emitLets = false;
 const hbsImportPreprocess = function(template) {
   const ast = preprocess(template);
   try {
-    if (!relativePath) {
-      delete transformArgs?.globals;
+    if (!relativePath || transformArgs?.withGlobals) {
+      if (!transformArgs?.withGlobals) {
+        delete transformArgs?.globals;
+      }
       return ast;
     }
     relativePath = relativePath.replace(/\\/g, '/');
@@ -130,7 +132,9 @@ const templateToTypescript = findModule('@glint/transform/lib/template/template-
 const templateToTypescriptFn = templateToTypescript.templateToTypescript;
 const patchedTemplateToTypescript = function (template, args) {
   args.meta = args.meta || {};
-  args.globals = {
+  const withGlobals = args.globals;
+  args.withGlobals = withGlobals;
+  args.globals = withGlobals || {
     includes: (v) => {
       return v.includes('::') || [
         'action',
@@ -158,7 +162,8 @@ const patchedTemplateToTypescript = function (template, args) {
   };
   args.preamble = args.preamble  || [];
   transformArgs = args;
-  if (!template.match(/^{{import/)) {
+  console.error(template);
+  if (!template.match(/^{{import/) && !withGlobals) {
     delete args.globals;
   }
   return templateToTypescriptFn.call(this, template, args);
