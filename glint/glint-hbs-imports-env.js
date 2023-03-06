@@ -162,7 +162,6 @@ const patchedTemplateToTypescript = function (template, args) {
   };
   args.preamble = args.preamble  || [];
   transformArgs = args;
-  console.error(template);
   if (!template.match(/^{{import/) && !withGlobals) {
     delete args.globals;
   }
