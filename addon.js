@@ -46,8 +46,9 @@ module.exports = {
   _getAddonOptions() {
     const parentOptions = this.parent && this.parent.options;
     const appOptions = this.app && this.app.options;
+    const addonOptions = parentOptions || appOptions || {};
 
-    return (parentOptions || appOptions || {})['ember-template-imports'] || {
+    return addonOptions['ember-template-imports'] || {
       style: {
         extension: 'scss',
         plugins: {
@@ -56,6 +57,16 @@ module.exports = {
         }
       }
     };
+  },
+
+  _getBabelOptions() {
+    const parentOptions = this.parent && this.parent.options;
+    const appOptions = this.app && this.app.options;
+    const addonOptions = parentOptions || appOptions || {};
+
+    addonOptions.babel = addonOptions.babel || {};
+    addonOptions.babel.plugins = addonOptions.babel.plugins || [];
+    return addonOptions.babel;
   },
 
   included(includer) {
@@ -74,6 +85,22 @@ module.exports = {
         return stew.mv(new Merge([ originalOutput, scopedOutput ]), this.treePaths.styles + '/' + this.name);
       }
     }
+    const name = typeof this.parent.name === 'function' ? this.parent.name() : this.parent.name;
+    const isDummy = isDummyAppBuild(this);
+
+    const VersionChecker = require('ember-cli-version-checker');
+    const checker = new VersionChecker(this);
+    const ember = checker.for('ember-source');
+    const options = {
+      styleExtension: this._getAddonOptions().style.extension,
+      root: path.join(this.project.root, ...(isDummy ? ['tests','dummy'] : [])),
+      failOnMissingImport: false,
+      failOnBadImport: false,
+      namespace: isDummy ? 'dummy' : name,
+      imports: this.imports,
+      useModifierHelperHelpers: ember.isAbove('v3.27.0-beta.2')
+    }
+    this._getBabelOptions().plugins.splice(0, 0, [require.resolve('./lib/hbs-imports-babel-plugin'), options]);
     this._super.included.call(this, arguments);
   },
 

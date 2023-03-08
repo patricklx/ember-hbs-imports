@@ -48,6 +48,8 @@
     "@ember/optional-features": "^2.0.0",
     "@ember/test-helpers": "^2.7.0",
     "@types/ember": "^4.0.0",
+    "@types/babel__traverse": "^7.18.3",
+    "@types/babel__core": "^7.18.3",
     "@typescript-eslint/eslint-plugin": "^3.1.0",
     "@typescript-eslint/parser": "^3.1.0",
     "ember-auto-import": "^2.4.1",

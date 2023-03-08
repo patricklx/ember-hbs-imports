@@ -65,6 +65,12 @@ and replacing all helper invocations with `{{ember-hbs-import/helpers/invoke-hel
 Our helper then looks up the actual helper and calls `compute` with the other arguments
 
 
+
+Embroider Support
+------------------------------------------------------------------------------
+
+
+
 Glint Support
 ------------------------------------------------------------------------------
 * use `ember-hbs-imports` as glint environment, remove ember-loose.
