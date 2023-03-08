@@ -44,38 +44,6 @@ module.exports = function hbsImports({ types: t }: { types: BabelTypes}) {
             const newImport = t.importDeclaration([], t.stringLiteral(s));
             path.node.body.unshift(newImport);
           });
-          const paths = new Set();
-          if (allImports) {
-            Object.values(allImports.info.components).forEach((comp) => {
-              let path = comp.path;
-              if (comp.imp.shouldLookInFile) {
-                path = comp.imp.importPath.split('/').slice(0, -1).join('/');
-              }
-              paths.add(path);
-            });
-            Object.values(allImports.info.helpers).forEach((comp) => {
-              let path = comp.resolvedPath;
-              if (comp.imp.shouldLookInFile) {
-                path = comp.imp.importPath.split('/').slice(0, -1).join('/');
-              }
-              paths.add(path);
-            });
-            Object.values(allImports.info.modifiers).forEach((comp) => {
-              let path = comp.resolvedPath;
-              if (comp.imp.shouldLookInFile) {
-                path = comp.imp.importPath.split('/').slice(0, -1).join('/');
-              }
-              paths.add(path);
-            });
-          }
-          [...paths]
-            .map(x => x.replace(new RegExp('^'+ImportProcessor.options.namespace + '\/'), ''))
-            .map(x => p.relative(p.dirname(fileName), p.join(cwd, x)))
-            .map(x => x.startsWith('.') ? x : `./${x}`)
-            .forEach((s) => {
-            const newImport = t.importDeclaration([], t.stringLiteral(s));
-            path.node.body.unshift(newImport);
-          })
         }
       },
       ImportDeclaration(path) {
