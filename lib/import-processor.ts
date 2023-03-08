@@ -116,6 +116,10 @@ const importProcessors = {
           relativePath = relativePath.replace(/^src\//, this.options.root + '/');
           importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
+          // fix for missing app namespace in embroider
+          if (!importPath.startsWith(this.options.namespace)) {
+            importPath = this.options.namespace + '/' + importPath;
+          }
         }
         const shouldLookInFile = localName.includes('{') && localName.includes('}');
         const hasMultiple = localName.includes(',') || localName.includes(' as ') || shouldLookInFile;
