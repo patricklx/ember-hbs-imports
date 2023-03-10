@@ -68,6 +68,8 @@ Our helper then looks up the actual helper and calls `compute` with the other ar
 
 Embroider Support
 ------------------------------------------------------------------------------
+to also have style imports working you need to add following to the embroider packagerOptions.
+this will prefix the styles with a specific hash, which is the same ember-hbs-imports will use in the templates.
 ```js
 const spark_md5 = require('spark-md5');
 ...
