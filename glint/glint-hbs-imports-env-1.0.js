@@ -22,7 +22,6 @@ exports.default = (options) => {
   const cwd = process.cwd();
   hbsImportsProcessor.default.options.root = require(path.join(cwd, 'package.json')).name;
   const cache = {};
-  let util = null;
   env.template.preprocess = (templateInfo, args) => {
     const template = templateInfo.contents;
     let relativePath = path.relative(cwd, templateInfo.filename);
@@ -47,44 +46,6 @@ exports.default = (options) => {
         delete args.globals;
       }
 
-      const all = [
-        ...Object.values(imported.info.components),
-        ...Object.values(imported.info.helpers),
-        ...Object.values(imported.info.modifiers)
-      ];
-
-      all.forEach((c) => {
-        const node = c.imp.node;
-        // node.params[2].loc.start.offset = util.positionToOffset(template, { line: node.params[2].loc.start.line-1, character: node.params[2].loc.start.column });
-        // node.params[2].loc.end.offset = util.positionToOffset(template, { line: node.params[2].loc.end.line-1, character: node.params[2].loc.end.column });
-      })
-
-      // const preamble = args.preamble;
-      // Object.entries(imported.info.components).forEach(([tag, i]) => {
-      //   if (i.imp.shouldLookInFile) {
-      //     preamble.push(`const ${tag}: typeof import('${i.path}').${tag} = {} as any;`);
-      //   } else {
-      //     preamble.push(`const ${tag}: typeof import('${i.path}').default = {} as any;`);
-      //   }
-      // });
-      // Object.entries(imported.info.modifiers).forEach(([tag, i]) => {
-      //   if (i.imp.shouldLookInFile) {
-      //     preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;\n`);
-      //   } else {
-      //     preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
-      //   }
-      // });
-      // Object.entries(imported.info.helpers).forEach(([tag, i]) => {
-      //   if (tag === 'array' && i.resolvedPath === '@ember/helper') {
-      //     return;
-      //   }
-      //   if (i.imp.shouldLookInFile) {
-      //     preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;\n`);
-      //   } else {
-      //     preamble.push(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;\n`);
-      //   }
-      // });
-      // currentTemplate.content = glimmer.print(ast);
     } catch (e) {
       console.error(e);
     }
