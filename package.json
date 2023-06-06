@@ -98,5 +98,9 @@
       "ember-cli-htmlbars"
     ]
   },
+  "exports": {
+    "./*": "./*",
+    "./glint-environment-definition": "./glint/glint-hbs-imports-env-1.0.js"
+  },
   "glint-environment": "glint/glint-hbs-imports-env.js"
 }
