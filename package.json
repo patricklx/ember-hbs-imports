@@ -1,6 +1,6 @@
 {
   "name": "ember-hbs-imports",
-  "version": "0.5.32",
+  "version": "0.5.33",
   "repository": {
     "type": "git",
     "url": "https://github.com/patricklx/ember-hbs-imports"
@@ -97,6 +97,10 @@
     "before": [
       "ember-cli-htmlbars"
     ]
+  },
+  "exports": {
+    "./*": "./*",
+    "./glint-environment-definition": "./glint/glint-hbs-imports-env-1.0.js"
   },
   "glint-environment": "glint/glint-hbs-imports-env.js"
 }

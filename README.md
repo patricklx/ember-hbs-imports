@@ -121,7 +121,6 @@ packagerOptions: {
     }
 ```
 
-
 Glint Support
 ------------------------------------------------------------------------------
 * use `ember-hbs-imports` as glint environment, remove ember-loose.
