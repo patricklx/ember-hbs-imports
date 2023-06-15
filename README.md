@@ -123,6 +123,7 @@ packagerOptions: {
 
 Glint Support
 ------------------------------------------------------------------------------
+* use glint/core tgz from https://github.com/patricklx/glint/releases
 * use `ember-hbs-imports` as glint environment, remove ember-loose.
 * make sure that there is an import for every values or dont use imports at all
 
