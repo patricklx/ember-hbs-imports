@@ -80,6 +80,7 @@ const importProcessors = {
     warn: true,
     namespace: '',
     emitLets: true,
+    keepImports: false,
     failOnBadImport: false,
     failOnMissingImport: false,
     useModifierHelperHelpers: false,
@@ -178,6 +179,7 @@ const importProcessors = {
     if (!imports.length) return imported;
 
     imports.forEach((imp) => {
+      if (this.options.keepImports) return;
       const index = ast.body.indexOf(imp.node as any);
       if (index >= 0) {
         ast.body.splice(index, 1);
