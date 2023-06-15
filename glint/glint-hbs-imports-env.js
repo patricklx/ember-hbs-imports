@@ -1,5 +1,11 @@
 const path = require('path');
-const rewriteModule = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\rewrite-module'))?.[1].exports;
+
+function findModule(path) {
+  return Object.entries(require.cache).find(([k, v]) => k.includes(path))?.[1].exports ||
+    Object.entries(require.cache).find(([k, v]) => k.includes(path.replace(/\//g, '\\')))?.[1].exports;
+}
+
+const rewriteModule = findModule('@glint/transform/lib/template/rewrite-module')
 
 if (!rewriteModule) {
   const looseEnv = require('@glint/environment-ember-loose/-private/environment/index');
@@ -45,11 +51,17 @@ hbsImportsProcessor.default.options.emitLets = false;
 const hbsImportPreprocess = function(template) {
   const ast = preprocess(template);
   try {
-    if (!relativePath) {
-      delete transformArgs?.globals;
+    if (!relativePath || transformArgs?.withGlobals) {
+      if (!transformArgs?.withGlobals) {
+        delete transformArgs?.globals;
+      }
       return ast;
     }
     relativePath = relativePath.replace(/\\/g, '/');
+    hbsImportsProcessor.default.options.namespace = path.basename(cwd);
+    if (relativePath.startsWith('tests/dummy/')) {
+      hbsImportsProcessor.default.options.namespace = 'dummy';
+    }
     const imported = hbsImportsProcessor.default.replaceInAst(ast, relativePath);
     cache[relativePath] = imported;
     if ([Object.keys(imported.info.components), Object.keys(imported.info.modifiers), Object.keys(imported.info.helpers)].flat().length === 0) {
@@ -107,7 +119,7 @@ const looseEnv = require('@glint/environment-ember-loose/-private/environment/in
 module.exports = looseEnv;
 
 
-const glintTransform =  Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\transformed-module'))?.[1].exports;
+const glintTransform = findModule('@glint/transform/lib/template/transformed-module');
 const getOriginalRange = glintTransform.default.prototype.getOriginalRange;
 glintTransform.default.prototype.getOriginalRange = function(...args) {
   const r = getOriginalRange.call(this, ...args);
@@ -116,11 +128,13 @@ glintTransform.default.prototype.getOriginalRange = function(...args) {
 }
 
 
-const templateToTypescript = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\transform\\lib\\template\\template-to-typescript'))?.[1].exports;
+const templateToTypescript = findModule('@glint/transform/lib/template/template-to-typescript');
 const templateToTypescriptFn = templateToTypescript.templateToTypescript;
 const patchedTemplateToTypescript = function (template, args) {
   args.meta = args.meta || {};
-  args.globals = {
+  const withGlobals = args.globals;
+  args.withGlobals = withGlobals;
+  args.globals = withGlobals || {
     includes: (v) => {
       return v.includes('::') || [
         'action',
@@ -140,13 +154,15 @@ const patchedTemplateToTypescript = function (template, args) {
         'unbound',
         'unless',
         'with',
-        'yield'
+        'yield',
+        'modifier',
+        'helper'
       ].includes(v)
     }
   };
   args.preamble = args.preamble  || [];
   transformArgs = args;
-  if (!template.match(/^{{import/)) {
+  if (!template.match(/^{{import/) && !withGlobals) {
     delete args.globals;
   }
   return templateToTypescriptFn.call(this, template, args);
@@ -154,7 +170,7 @@ const patchedTemplateToTypescript = function (template, args) {
 templateToTypescript.templateToTypescript = patchedTemplateToTypescript;
 
 
-const transformManager = Object.entries(require.cache).find(([k, v]) => k.includes('@glint\\core\\lib\\common\\transform-manager'))?.[1].exports;
+const transformManager = findModule('@glint/core/lib/common/transform-manager');
 const rewriteDiagnostics = transformManager.default.prototype.rewriteDiagnostics;
 const patchedRewriteDiagnostics = function (diagnostics, fileName) {
   const diags = rewriteDiagnostics.call(this, diagnostics, fileName);
@@ -167,6 +183,7 @@ const patchedRewriteDiagnostics = function (diagnostics, fileName) {
     if (result && result.length > 1) {
       const importPath = result[1];
       const rel = path.relative(cwd, d.file.fileName).replace(/\\/g, '/');
+      if (!cache[rel]) return diags;
       const c = Object.values(cache[rel].info.components).find(x => x.imp.importPath === importPath) ||
         Object.values(cache[rel].info.helpers).find(x => x.imp.importPath === importPath) ||
         Object.values(cache[rel].info.modifiers).find(x => x.imp.importPath === importPath);

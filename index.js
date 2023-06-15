@@ -19,6 +19,8 @@ module.exports = {
 
   patchEmbroider() {
     const { Webpack } = require('@embroider/webpack');
+    const Funnel = require('broccoli-funnel');
+    const MergeTrees = require('broccoli-merge-trees');
     const resolver = require('@embroider/compat/src/resolver').default;
     const tryComponent = resolver.prototype.tryComponent;
     resolver.prototype.tryComponent = function (compPath, from, withRuleLookup) {

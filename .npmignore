@@ -4,5 +4,8 @@
 !lib/**/*.js
 !glint/**/*.js
 !config/**/*.js
+!template-lint/**/*.js
+!template-lint/**/*.mjs
 !addon.js
 !index.js
+!hbs-imports-rule.mjs

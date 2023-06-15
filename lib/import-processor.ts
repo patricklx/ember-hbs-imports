@@ -62,6 +62,8 @@ const builtInHelpers = [
   'unless',
   'with',
   'yield',
+  'modifier',
+  'helper',
 ];
 
 type Msg = {

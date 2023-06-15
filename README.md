@@ -68,8 +68,58 @@ Our helper then looks up the actual helper and calls `compute` with the other ar
 
 Embroider Support
 ------------------------------------------------------------------------------
-
-
+to also have style imports working you need to add following to the embroider packagerOptions.
+this will prefix the styles with a specific hash, which is the same ember-hbs-imports will use in the templates.
+```js
+const spark_md5 = require('spark-md5');
+...
+packagerOptions: {
+      webpackConfig: {
+        module: {
+          rules: [
+            {
+              test: /app\/styles\/app.scss$/i,
+              use: [
+                { loader: 'style-loader' },
+                { loader: 'css-loader', options: {
+                    modules: {
+                      mode: 'global',
+                    }
+                  } },
+                { loader: 'sass-loader' }
+              ],
+            },
+            {
+              test: /\.scoped\.scss$/i,
+              use: [
+                { loader: 'style-loader' },
+                { loader: 'css-loader', options: {
+                    modules: {
+                      mode: 'local',
+                      getLocalIdent(context, localIdentName, localName) {
+                        const name = localName;
+                        let namespace = context.resourcePath.split('node_modules').slice(-1)[0];
+                        if (namespace.startsWith('@')) {
+                          namespace = namespace.split('/').slice(0, 2).join('/');
+                        } else {
+                          namespace = namespace.split('/')[0];
+                        }
+                        let relativePath = context.resourcePath;
+                        relativePath = relativePath.replace(/\\/g, '/');
+                        const prefix = context.context;
+                        const hashKey = `${namespace}_${prefix}_${name}`;
+                        return `${namespace}_${prefix}_${name}_${spark_md5.hash(hashKey).slice(0, 5)}`;
+                      }
+                    }
+                  } },
+                { loader: 'sass-loader' }
+              ],
+            },
+          ],
+        },
+      }
+    }
+```
 
 Glint Support
 ------------------------------------------------------------------------------
