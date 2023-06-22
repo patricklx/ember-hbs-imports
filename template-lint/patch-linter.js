@@ -1,4 +1,5 @@
 const path = require("path");
+const fs = require("fs");
 
 const index = process.argv.indexOf('--filename')
 
@@ -10,7 +11,9 @@ const lookupPaths = [
 if (fs.existsSync("node_modules/.pnpm")) {
   const entries = fs.readdirSync("node_modules/.pnpm");
   const recast = entries.find(d => d.startsWith('ember-template-recast'));
-  lookupPaths.push(path.join("node_modules/.pnpm", recast, "node_modules"));
+  if (recast) {
+    lookupPaths.push(path.join("node_modules/.pnpm", recast, "node_modules"));
+  }
 }
 
 const glimmerPath = require.resolve('@glimmer/syntax', { paths: lookupPaths });
