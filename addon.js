@@ -97,7 +97,7 @@ module.exports = {
       failOnMissingImport: false,
       failOnBadImport: false,
       namespace: isDummy ? 'dummy' : name,
-      imports: this.imports,
+      imports: {},
       useModifierHelperHelpers: ember.isAbove('v3.27.0-beta.2')
     }
     this._getBabelOptions().plugins.splice(0, 0, [require.resolve('./lib/hbs-imports-babel-plugin'), options]);
