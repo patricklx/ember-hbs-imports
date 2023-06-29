@@ -97,29 +97,39 @@ exports.default = (options) => {
         mapper.emit.forNode(node, () => {
           try {
             const matcher = (p, i) => (p.value && node.params[i].value === p.value) || (p.original && node.params[i].original === p.original);
-            let [tag, i] = Object.entries(imported.info.components).find(([tag, i]) => i.imp.node.params.every(matcher)) || [];
-            if (i?.imp.shouldLookInFile) {
-              mapper.emit.text(`const ${tag}: typeof import('${i.path}').${tag} = {} as any`);
-            } else if (i) {
-              mapper.emit.text(`const ${tag}: typeof import('${i.path}').default = {} as any`);
-            }
+            Object.entries(imported.info.components).filter(([tag, i]) => i.imp.node.params.every(matcher)).forEach(([tag, i]) => {
+              if (i?.imp.shouldLookInFile) {
+                mapper.emit.text(`const ${tag}: typeof import('${i.path}').${tag} = {} as any;`);
+                mapper.emit.newline();
+              } else if (i) {
+                mapper.emit.text(`const ${tag}: typeof import('${i.path}').default = {} as any;`);
+                mapper.emit.newline();
+              }
+            });
 
-            [tag, i] = Object.entries(imported.info.modifiers).find(([tag, i]) => i.imp.node.params.every(matcher)) || [];
-            if (i?.imp.shouldLookInFile) {
-              mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any`);
-            } else if (i) {
-              mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any`);
-            }
 
-            [tag, i] = Object.entries(imported.info.helpers).find(([tag, i]) => i.imp.node.params.every(matcher)) || [];
-            if (tag === 'array' && i?.resolvedPath === '@ember/helper') {
-              return;
-            }
-            if (i?.imp.shouldLookInFile) {
-              mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any`);
-            } else if (i) {
-              mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any`);
-            }
+            Object.entries(imported.info.modifiers).filter(([tag, i]) => i.imp.node.params.every(matcher)).forEach(([tag, i]) => {
+              if (i?.imp.shouldLookInFile) {
+                mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;`);
+                mapper.emit.newline();
+              } else if (i) {
+                mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;`);
+                mapper.emit.newline();
+              }
+            });
+
+            Object.entries(imported.info.helpers).filter(([tag, i]) => i.imp.node.params.every(matcher)).forEach(([tag, i]) => {
+              if (tag === 'array' && i?.resolvedPath === '@ember/helper') {
+                return;
+              }
+              if (i?.imp.shouldLookInFile) {
+                mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').${tag} = {} as any;`);
+                mapper.emit.newline();
+              } else if (i) {
+                mapper.emit.text(`const ${tag}: typeof import('${i.resolvedPath}').default = {} as any;`);
+                mapper.emit.newline();
+              }
+            });
           } catch (e) {
             console.log(e)
           }
