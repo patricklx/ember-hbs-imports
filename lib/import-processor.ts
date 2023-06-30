@@ -309,6 +309,7 @@ const importProcessors = {
           }
           modifiers[p.original] = modifiers[p.original] || { resolvedPath, nodes: [], imp: i };
           modifiers[p.original].nodes.push(p);
+          delete helpers[p.original];
           imported.others.add(resolvedPath + '.js');
           i.used = true;
         });
