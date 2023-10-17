@@ -24,6 +24,7 @@ module.exports = function hbsImports({ types: t }: { types: BabelTypes}) {
           ImportProcessor.options = Object.assign({}, state.opts);
           // @ts-ignore
           const fileName = path.hub.file.opts.filename;
+          if (!fileName) return;
           if (fileName.includes('embroider')) {
             const parts = fileName.split('/');
             const index = parts.indexOf('embroider');
@@ -35,6 +36,7 @@ module.exports = function hbsImports({ types: t }: { types: BabelTypes}) {
         exit(path, state) {
           // @ts-ignore
           const fileName = path.hub.file.opts.filename;
+          if (!fileName) return;
           const importedStyles = allImports && [...allImports.others]
             .filter(x => x.endsWith('.scss'))
             .map(x => x.replace(new RegExp('^'+ImportProcessor.options.namespace + '\/'), ''))
