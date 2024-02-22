@@ -35,7 +35,7 @@ Syntax:
 {{import "{ fn }" from "@ember/helper"}}
 {{import myHelper from 'ui/helper'}}
 {{import my-mod from 'ui/modifiers'}}
-{{import style from './styles.scoped.scss'}}
+{{import style from './styles.module.scss'}}
 {{import BasicDropdown from 'ember-basic-dropdown/components/basic-dropdown'}}
 {{import SameDropdown from 'ember-basic-dropdown/components/basic-dropdown'}}
 
@@ -90,7 +90,7 @@ packagerOptions: {
               ],
             },
             {
-              test: /\.scoped\.scss$/i,
+              test: /\.module\.scss$/i,
               use: [
                 { loader: 'style-loader' },
                 { loader: 'css-loader', options: {

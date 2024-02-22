@@ -23,8 +23,8 @@ module.exports = class StylesRewriter extends BroccoliFilter {
     this.options.extension = this.options.extension || 'scss';
     this.options.before = this.options.before || [];
     this.options.after = this.options.after || [];
-    this.extensions = [ 'scoped.' + this.options.extension ];
-    this.targetExtension = 'scoped.' + this.options.extension;
+    this.extensions = [ 'module.' + this.options.extension ];
+    this.targetExtension = 'module.' + this.options.extension;
   }
 
   cacheKeyProcessString(string, relativePath) {
@@ -43,7 +43,7 @@ module.exports = class StylesRewriter extends BroccoliFilter {
     if (relativePath.endsWith('pod-styles.scss')) {
       return contents;
     }
-    if (relativePath.endsWith('scoped.scss')) {
+    if (relativePath.endsWith('module.scss')) {
       const plugins = [...this.options.before]
       plugins.push(rewriterPlugin({
         filename: relativePath,

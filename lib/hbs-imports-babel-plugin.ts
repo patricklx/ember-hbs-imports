@@ -2,7 +2,6 @@ import ImportProcessor from './import-processor';
 import p from 'path';
 import type * as BabelCoreNamespace from '@babel/core';
 import type * as BabelTypesNamespace from '@babel/types';
-import type { NodePath } from '@babel/traverse';
 import { PluginObj } from '@babel/core';
 import { V8IntrinsicIdentifier } from '@babel/types';
 
@@ -39,7 +38,7 @@ module.exports = function hbsImports({ types: t }: { types: BabelTypes}) {
           if (!fileName) return;
           const importedStyles = allImports && [...allImports.others]
             .filter(x => x.endsWith('.scss'))
-            .map(x => x.replace(new RegExp('^'+ImportProcessor.options.namespace + '\/'), ''))
+            .map(x => x.replace(new RegExp('^'+ImportProcessor.options.namespace + '/'), ''))
             .map(x => p.relative(p.dirname(fileName), p.join(ImportProcessor.options.root, x)))
             .map(x => x.startsWith('.') ? x : `./${x}`);
           importedStyles?.forEach((s) => {
