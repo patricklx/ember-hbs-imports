@@ -87,7 +87,7 @@ const importProcessors = {
     useHelperWrapper: true,
     useSafeImports: true,
     extendImportPathForNamedImports: true,
-    embroiderStatic: true,
+    embroiderStatic: false,
     messageFormat: 'json'
   },
   glimmer,
