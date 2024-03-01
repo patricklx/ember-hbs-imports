@@ -87,6 +87,7 @@ const importProcessors = {
     useHelperWrapper: true,
     useSafeImports: true,
     extendImportPathForNamedImports: true,
+    embroiderStatic: true,
     messageFormat: 'json'
   },
   glimmer,
@@ -188,8 +189,11 @@ const importProcessors = {
     const components = imported.info.components;
     const helpers = imported.info.helpers;
     const modifiers = imported.info.modifiers;
+    const options = this.options;
+
     function findImport(name: string) {
       return imports.find((imp) => {
+        if (options.embroiderStatic && imp.shouldLookInFile) return false;
         if (imp.isStyle) {
           return name.split('.')[0] === imp.localName;
         }
@@ -355,11 +359,13 @@ const importProcessors = {
     }
 
     const createComponentLetBlockExpr = (comp: [key: string, info: {path: string}]) => {
-      return importProcessors.glimmer.preprocess(`{{#let (component "${comp[1].path}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
+      const path = (options.embroiderStatic ? '__hbs__import_' : '') +  comp[1].path.replace(/\\/g, '/');
+      return importProcessors.glimmer.preprocess(`{{#let (component "${path}") as |${comp[0]}|}}{{/let}}`).body[0] as glimmer.AST.BlockStatement;
     };
     const handleHelper = (helper: { nodes: PathExpression[], resolvedPath: string }) => {
+      const path = (options.embroiderStatic ? '__hbs__import_' : '') +  helper.resolvedPath.replace(/\\/g, '/');
       if (this.options.useModifierHelperHelpers) {
-        let lookup =  `"${helper.resolvedPath}"`;
+        let lookup =  `"${path}"`;
         if (this.options.useHelperWrapper) {
           lookup = `(ember-hbs-imports/helpers/lookup-helper this "${helper.resolvedPath}")`;
         }
@@ -371,8 +377,9 @@ const importProcessors = {
       }
     };
     const handleModifier = (modifier: { nodes: PathExpression[], resolvedPath: string }) => {
+      const path = (options.embroiderStatic ? '__hbs__import_' : '') +   modifier.resolvedPath.replace(/\\/g, '/');
       if (this.options.useModifierHelperHelpers) {
-        let lookup =  `"${modifier.resolvedPath}"`;
+        let lookup =  `"${path}"`;
         if (this.options.useHelperWrapper) {
           lookup = `(ember-hbs-imports/helpers/lookup-modifier this "${modifier.resolvedPath}")`;
         }

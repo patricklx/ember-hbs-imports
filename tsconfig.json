@@ -20,6 +20,7 @@
     "paths": {}
   },
   "include": [
+    "index.d.ts",
     "lib/",
     "addon/**/*",
     "app/**/*"

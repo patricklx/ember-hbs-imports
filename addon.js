@@ -48,7 +48,7 @@ module.exports = {
     const appOptions = this.app && this.app.options;
     const addonOptions = parentOptions || appOptions || {};
 
-    return addonOptions['ember-template-imports'] || {
+    return addonOptions['ember-hbs-imports'] || {
       style: {
         extension: 'scss',
         plugins: {
@@ -91,14 +91,17 @@ module.exports = {
     const VersionChecker = require('ember-cli-version-checker');
     const checker = new VersionChecker(this);
     const ember = checker.for('ember-source');
+    const addonOptions = this._getAddonOptions();
     const options = {
-      styleExtension: this._getAddonOptions().style.extension,
+      styleExtension: addonOptions.style.extension,
       root: path.join(this.project.root, ...(isDummy ? ['tests','dummy'] : [])),
       failOnMissingImport: false,
       failOnBadImport: false,
       namespace: isDummy ? 'dummy' : name,
       imports: {},
-      useModifierHelperHelpers: ember.isAbove('v3.27.0-beta.2')
+      useModifierHelperHelpers: ember.isAbove('v3.27.0-beta.2'),
+      useHelperWrapper: !ember.isAbove('v3.27.0-beta.2'),
+      embroiderStatic: addonOptions.embroiderStatic,
     }
     this._getBabelOptions().plugins.splice(0, 0, [require.resolve('./lib/hbs-imports-babel-plugin'), options]);
     this._super.included.call(this, arguments);
@@ -123,7 +126,7 @@ module.exports = {
   _scopedStyles(tree, namespace, outputFile) {
     const config = this._getAddonOptions().style;
     outputFile = outputFile || 'pod-styles.' + config.extension
-    tree = new Funnel(tree, { include: [ '**/*.scoped.' + config.extension ] });
+    tree = new Funnel(tree, { include: [ '**/*.module.' + config.extension ] });
     tree = new StylesRewriter(tree, {
       namespace,
       extension: config.extension,
@@ -138,7 +141,7 @@ module.exports = {
     // eslint-disable-next-line @typescript-eslint/no-this-alias
     const self = this;
     registry.add('template', {
-      name: 'ember-template-imports',
+      name: 'ember-hbs-imports',
       ext: 'hbs',
       before: ['ember-cli-htmlbars'],
       toTree: (tree) => {
@@ -148,14 +151,17 @@ module.exports = {
         const VersionChecker = require('ember-cli-version-checker');
         const checker = new VersionChecker(this);
         const ember = checker.for('ember-source');
+        const addonOptions = this._getAddonOptions();
         const options = {
-          styleExtension: this._getAddonOptions().style.extension,
+          styleExtension: addonOptions.style.extension,
           root: path.join(this.project.root, ...(isDummy ? ['tests','dummy'] : [])),
           failOnMissingImport: false,
           failOnBadImport: false,
           namespace: isDummy ? 'dummy' : name,
           imports: this.imports,
-          useModifierHelperHelpers: ember.isAbove('v3.27.0-beta.2')
+          useModifierHelperHelpers: ember.isAbove('v3.27.0-beta.2'),
+          useHelperWrapper: !ember.isAbove('v3.27.0-beta.2'),
+          embroiderStatic: addonOptions.embroiderStatic,
         }
         tree = new TemplateImportProcessor(tree, options);
         return tree;
