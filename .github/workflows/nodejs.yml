@@ -10,11 +10,11 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2.4.1
+    - uses: actions/checkout@v3
     - name: Use Node.js
-      uses: actions/setup-node@v1
+      uses: actions/setup-node@v4
       with:
-        node-version: 14.x
+        node-version: 18.x
     - name: setup pnpm
       run: |
         npm i -g pnpm
@@ -60,14 +60,26 @@ jobs:
           - scenario: canary
             experimental: true
     steps:
-      - name: Checkout
-        uses: actions/checkout@v1
+      - uses: actions/checkout@v3
       - name: Use Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
-          node-version: 14.x
-      - name: Install dependencies (npm)
-        run: npm install && ./node_modules/.bin/tsc
+          node-version: 18.x
+      - name: setup pnpm
+        run: |
+          npm i -g pnpm
+          echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+      - uses: actions/cache@v3
+        name: Setup pnpm cache
+        with:
+          path: ${{ env.STORE_PATH }}
+          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-pnpm-store-
+      - name: npm install, build
+        run: |
+          pnpm install
+          ./node_modules/.bin/tsc
       - name: Setup ember-try scenario
         run: ./node_modules/.bin/ember try:one ember-${{ matrix.scenario }} --skip-cleanup --- cat package.json
       - name: Run test component
