@@ -48,7 +48,7 @@ module.exports = {
     const appOptions = this.app && this.app.options;
     const addonOptions = parentOptions || appOptions || {};
 
-    return addonOptions['ember-hbs-imports'] || {
+    return Object.assign({
       style: {
         extension: 'scss',
         plugins: {
@@ -56,7 +56,7 @@ module.exports = {
           after: []
         }
       }
-    };
+    }, addonOptions['ember-hbs-imports']);
   },
 
   _getBabelOptions() {
