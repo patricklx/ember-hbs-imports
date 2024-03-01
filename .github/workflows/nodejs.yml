@@ -15,9 +15,20 @@ jobs:
       uses: actions/setup-node@v1
       with:
         node-version: 14.x
+    - name: setup pnpm
+      run: |
+        npm i -g pnpm
+        echo "STORE_PATH=$(pnpm store path --silent)" >> $GITHUB_ENV
+    - uses: actions/cache@v3
+      name: Setup pnpm cache
+      with:
+        path: ${{ env.STORE_PATH }}
+        key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
+        restore-keys: |
+          ${{ runner.os }}-pnpm-store-
     - name: npm install, build
       run: |
-        npm install
+        pnpm install
         ./node_modules/.bin/tsc
       env:
         CI: true
