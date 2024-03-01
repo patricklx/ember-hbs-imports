@@ -46,10 +46,10 @@ module.exports = {
 
   _findApp() {
     let parent = this.parent;
-    while (parent.parent) {
+    while (!parent.app) {
       parent = parent.parent;
     }
-    return parent;
+    return parent.app;
   },
 
   _getAddonOptions() {
