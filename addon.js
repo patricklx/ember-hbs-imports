@@ -45,6 +45,9 @@ module.exports = {
 
 
   _findApp() {
+    if (this.app) {
+      return this.app;
+    }
     let parent = this.parent;
     while (!parent.app) {
       parent = parent.parent;
