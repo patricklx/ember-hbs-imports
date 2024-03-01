@@ -43,10 +43,19 @@ module.exports = {
   name: require('./package').name,
   imports: imports,
 
+
+  _findApp() {
+    let parent = this.parent;
+    while (parent.parent) {
+      parent = parent.parent;
+    }
+    return parent;
+  },
+
   _getAddonOptions() {
     const parentOptions = this.parent && this.parent.options;
-    const appOptions = this.app && this.app.options;
-    const addonOptions = parentOptions || appOptions || {};
+    const appOptions = this._findApp().options;
+    const addonOptions = Object.assign({}, parentOptions, appOptions);
 
     return Object.assign({
       style: {
