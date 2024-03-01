@@ -24,9 +24,9 @@ module.exports = function hbsImports({ types: t }: { types: BabelTypes}) {
           // @ts-ignore
           const fileName = path.hub.file.opts.filename;
           if (!fileName) return;
-          if (fileName.includes('embroider')) {
+          if (fileName.includes('.embroider')) {
             const parts = fileName.split('/');
-            const index = parts.indexOf('embroider');
+            const index = parts.indexOf('.embroider');
             cwd = parts.slice(0, index + 2).join('/');
           }
           ImportProcessor.options.root = cwd;
