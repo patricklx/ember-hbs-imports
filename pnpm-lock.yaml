@@ -164,9 +164,6 @@ devDependencies:
   typescript:
     specifier: ^4.0.0
     version: 4.9.5
-  webpack:
-    specifier: ^5.0.0
-    version: 5.90.3
 
 packages:
 
