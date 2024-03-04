@@ -118,7 +118,7 @@ const importProcessors = {
           relativePath = relativePath.replace(/^app\//, this.options.root + '/');
           relativePath = relativePath.replace(/^addon\//, this.options.root + '/');
           relativePath = relativePath.replace(/^src\//, this.options.root + '/');
-          importPath = path.join(path.dirname(relativePath), importPath).split(path.sep).join('/');
+          importPath = path.resolve(path.dirname(relativePath), importPath).split(path.sep).join('/');
           importPath = importPath.replace('node_modules/', '');
           // fix for missing app namespace in embroider
           if (!importPath.startsWith(this.options.namespace)) {

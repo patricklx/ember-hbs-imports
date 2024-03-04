@@ -22,7 +22,7 @@ module.exports = function hbsImports({ types: t }: { types: BabelTypes}) {
           let cwd = process.cwd();
           ImportProcessor.options = Object.assign({}, state.opts);
           // @ts-ignore
-          const fileName = path.hub.file.opts.filename;
+          const fileName = path.hub.file.opts.filename.replace(/\\/g, '/');
           if (!fileName) return;
           if (fileName.includes('embroider')) {
             const parts = fileName.split('/');
